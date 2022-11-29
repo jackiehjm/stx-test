@@ -1,9 +1,9 @@
 watchdog
 robotframework==3.1.1
-robotframework-seleniumlibrary
-robotframework-sshlibrary
+robotframework-seleniumlibrary==4.3.0
+robotframework-sshlibrary==3.8.0
 pexpect
-PyYaml==5.4.1
+PyYaml
 netifaces
 bash
 elevate

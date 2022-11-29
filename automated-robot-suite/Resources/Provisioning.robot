@@ -99,7 +99,7 @@ Setup Partitions
     ...    Add Disk Partition    ${host}
     ...    ${root_disk_uuid}    ${cgts_part_size}    ${part_status}
     Run Keyword If    ${is_controller}==True or ${setup_cgts}==True
-    ...    Add Physical Volume    ${host}    ${lgv_name}
+    ...    Add Physical Volume    ${host}    cgts-vg
     ...    ${cgts_partition_uuid}
 
 Configure Backend Ceph

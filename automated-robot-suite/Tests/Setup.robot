@@ -91,7 +91,7 @@ Ansible Bootstrap Configuration
     Run Command    ${sed_cmd}
     ${bootstrap}    Set Variable
     ...    /usr/share/ansible/stx-ansible/playbooks/bootstrap.yml
-    Run Command    ansible-playbook ${bootstrap}    True    3600    ~$
+    Run Command    ansible-playbook ${bootstrap}    True    7200    ~$
 
 Copy Install Packages
     [Tags]    Simplex    Duplex    MN-Local    MN-External    baremetal

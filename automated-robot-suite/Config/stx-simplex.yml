@@ -1,8 +1,8 @@
 dns_servers:
   - 8.8.8.8
 
-docker_http_proxy: http://<url>:<port>
-docker_https_proxy: http://<url>:<port>
+docker_http_proxy: http://147.11.252.42:9090
+docker_https_proxy: http://147.11.252.42:9090
 
 external_oam_subnet: 10.10.10.0/24
 external_oam_gateway_address: 10.10.10.1

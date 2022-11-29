@@ -35,7 +35,7 @@ ${privaterouter}        private-router0
 ${lgv_name}             nova-local
 ${nova_size}            100
 ${nova_size_comp}       True
-${cgts_part_size}       20
+${cgts_part_size}       50
 ${app_tarball}          ${APP_TARBALL_FILE}
 ${host_image_path}      /home/${CLI_USER_NAME}/
 ${clouds_yml}           clouds.yml
@@ -51,34 +51,12 @@ Provisioning Simplex System
     Run Keyword If   '${ENVIRONMENT}'=='baremetal'    Run Keywords
     ...    Set NTP Server    AND    Configure Vswitch Type
     Configure Backend Ceph
-    Configure Data Interfaces    ${master_controller}    ${data0if}
-    ...    ${data1if}    ${physnet0}    ${physnet1}    ${mtu}
-    Enable Containerized Services    ${master_controller}
-    Setup Partitions    ${master_controller}    ${lgv_name}    ${nova_size}
-    ...    ${cgts_part_size}
     Configure Ceph    ${master_controller}    ${backend_type}
     Run Keyword If   '${ENVIRONMENT}'=='baremetal'
     ...    Configure Huge Page Size    ${master_controller}
     Unlock Master Controller    ${master_controller}
-    Set Ceph Pool Replication
     Wait Until Keyword Succeeds    5 min    5 sec
     ...    Check Ceph Status
-    Put File    %{PYTHONPATH}/${app_tarball}
-    ...    ${host_image_path}/${app_tarball}
-    Stage Application Deployment    stx-openstack    ${app_tarball}
-    Bring Up Services    stx-openstack
-    Set Ceph Pool Replication
-    Put File    %{PYTHONPATH}/Utils/${clouds_yml}
-    ...    ${host_image_path}/${clouds_yml}
-    ${sed_cmd}    Catenate
-    ...    sed -i 's/PASS/${password}/'    ${host_image_path}/${clouds_yml}
-    Run Command    ${sed_cmd}
-    Set Cluster Endpoints    ${clouds_yml}
-    Provider Network Setup    ${physnet0}    ${physnet1}
-    Tenant Networking Setup    ${physnet0}    ${physnet1}    ${externalnet}
-    ...    ${publicnet}    ${privatenet}    ${internalnet}    ${publicsubnet}
-    ...    ${privatesubnet}    ${internalsubnet}    ${externalsubnet}
-    ...    ${publicrouter}    ${privaterouter}
 
 Provisioning Duplex System
     [Tags]    Duplex

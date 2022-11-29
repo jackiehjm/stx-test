@@ -7,7 +7,7 @@ from __future__ import print_function
 
 import argparse
 from argparse import RawDescriptionHelpFormatter
-from imp import reload
+from importlib import reload
 import multiprocessing
 import os
 import re
