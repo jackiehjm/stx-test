@@ -40,13 +40,13 @@ ${app_tarball}          ${APP_TARBALL_FILE}
 ${host_image_path}      /home/${CLI_USER_NAME}/
 ${clouds_yml}           clouds.yml
 ${password}             ${Config.credentials.STX_DEPLOY_USER_PSWD}
+${o2_tarball}           /usr/local/share/applications/helm/oran-o2-2.0.0-2.tgz
+
 
 *** Test Cases ***
 Provisioning Simplex System
     [Tags]    Simplex
     [Documentation]     Validates provisioning of a simplex configuration
-    ...    according to steps defined at
-    ...    "https://wiki.openstack.org/wiki/StarlingX/Containers/Installation"
     Configure OAM Interface    ${master_controller}
     Run Keyword If   '${ENVIRONMENT}'=='baremetal'    Run Keywords
     ...    Set NTP Server    AND    Configure Vswitch Type
@@ -57,6 +57,13 @@ Provisioning Simplex System
     Unlock Master Controller    ${master_controller}
     Wait Until Keyword Succeeds    5 min    5 sec
     ...    Check Ceph Status
+
+Apply O2 app
+    [Tags]    Simplex
+    [Documentation]     Apply the O2 fluxce app
+    Stage Application Deployment    oran-o2    ${o2_tarball}
+    System Application Apply        oran-o2
+
 
 Provisioning Duplex System
     [Tags]    Duplex
