@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: stress-ng-cpu
+spec:
+  containers:
+  - name: stress-ng-app
+    image: alexeiled/stress-ng
+    imagePullPolicy: IfNotPresent
+    command: ["/stress-ng"]
+    args: ["-c 0 -l 96"]

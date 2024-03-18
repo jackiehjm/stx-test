@@ -1,9 +1,7 @@
-#
 # Copyright (c) 2019 Wind River Systems, Inc.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
-
 
 import os
 import re
@@ -155,7 +153,7 @@ class SSHClient:
             # print(str(self.searchwindowsize))
             try:
                 self.session = pxssh.pxssh(
-                    encoding='utf-8', searchwindowsize=self.searchwindowsize)
+                    encoding='utf-8', searchwindowsize=self.searchwindowsize,timeout=300)
 
                 # set to ignore ssh host fingerprinting
                 self.session.SSH_OPTS = _SSH_OPTS
@@ -199,6 +197,7 @@ class SSHClient:
 
                     self.exec_cmd('unset PROMPT_COMMAND', get_exit_code=False)
                     self.exec_cmd('export TMOUT=0', get_exit_code=False)
+                    self.exec_cmd("bind 'set enable-bracketed-paste off'", get_exit_code=False)
                     return
 
                 # retry if this line is reached. it would've returned if
@@ -432,7 +431,40 @@ class SSHClient:
             self.send_control('c')
             self.flush(10)
 
-    def exec_cmd(self, cmd, expect_timeout=60, reconnect=False,
+    def get_raw_output(self, cmd, expect_timeout=60, reconnect=False,
+                 reconnect_timeout=300, err_only=False, rm_date=False,
+                 fail_ok=True, get_exit_code=True, blob=None, force_end=False,
+                 searchwindowsize=None,
+                 prefix_space=False):
+        if blob is None:
+            blob = self.prompt
+
+        LOG.debug("Executing command...")
+        if err_only:
+            cmd += ' 1> /dev/null'  # discard stdout
+
+        if prefix_space:
+            cmd = ' {}'.format(cmd)
+
+        self.send(cmd, reconnect, reconnect_timeout)
+        code_force = 0
+        try:
+            self.expect(blob_list=blob, timeout=expect_timeout,
+                        searchwindowsize=searchwindowsize)
+        except pexpect.TIMEOUT as e:
+            code_force = 130
+            self.send_control('c')
+            self.flush(timeout=10)
+            if fail_ok:
+                LOG.warning(e.__str__())
+            else:
+                raise
+
+        self.__force_end(force_end)
+
+        return self.cmd_output
+
+    def exec_cmd(self, cmd, expect_timeout=3000, reconnect=False,
                  reconnect_timeout=300, err_only=False, rm_date=False,
                  fail_ok=True, get_exit_code=True, blob=None, force_end=False,
                  searchwindowsize=None,
@@ -513,6 +545,7 @@ class SSHClient:
 
         cmd_output = '\n'.join(cmd_output_list)
 
+        LOG.info("cmd_output equals {}".format(cmd_output))
         if get_exit_code:
             exit_code = self.get_exit_code()
         else:
@@ -538,14 +571,26 @@ class SSHClient:
         return self.prompt
 
     def get_exit_code(self):
-        self.send(EXIT_CODE_CMD)
-        self.expect(timeout=30, fail_ok=False)
-        matches = re.findall("\n([-+]?[0-9]+)\n", self.cmd_output)
+        # This is a gentle hack to avoid the occasions where
+        # we don't get an exit code on the first attempt
+        def _get_exit_code(cmd_output):
+            matches = re.findall("\n([-+]?[0-9]+)\n", cmd_output)
+            if len(matches) == 0:
+                stripped = re.sub(r'\x1b.*?\r', '', cmd_output)
+                matches = re.findall("\n([-+]?[0-9]+)\n", stripped)
+            return matches
+
+        for _ in range(2):
+            self.send(EXIT_CODE_CMD)
+            self.expect(timeout=30, fail_ok=False)
+            matches = _get_exit_code(self.cmd_output)
+            if matches:
+                break
         return int(matches[-1])
+
 
     def get_hostname(self):
         return self.exec_cmd('hostname', get_exit_code=False)[1].splitlines()[0]
-
     def rsync(self, source, dest_server, dest, dest_user=None,
               dest_password=None, ssh_port=None, extra_opts=None,
               pre_opts=None, timeout=120, fail_ok=False):
@@ -722,10 +767,10 @@ class SSHClient:
                 self.send('exit')
                 self.expect()
 
-    def exec_sudo_cmd(self, cmd, expect_timeout=60, rm_date=True, fail_ok=True,
+    def exec_sudo_cmd(self, cmd, expect_timeout=10, rm_date=True, fail_ok=True,
                       get_exit_code=True,
                       searchwindowsize=None, strict_passwd_prompt=False,
-                      extra_prompt=None, prefix_space=False):
+                      extra_prompt=None, prefix_space=False, catch_exceptions=True):
         """
         Execute a command with sudo.
 
@@ -1224,6 +1269,8 @@ class SSHFromSSH(SSHClient):
                     "Successfully connected to {} from "
                     "{}!".format(self.host, self.parent.host))
                 self.exec_cmd('export TMOUT=0')
+                self.exec_cmd('unset PROMPT_COMMAND', get_exit_code=False)
+                self.exec_cmd("bind 'set enable-bracketed-paste off'", get_exit_code=False)
                 return
 
             except (OSError, pxssh.TIMEOUT, pexpect.EOF, pxssh.ExceptionPxssh,
@@ -1511,6 +1558,7 @@ class ControllerClient:
                 name = cls.__default_name
             else:
                 lab_dict = ProjVar.get_var('lab')
+                LOG.info('lab_dict = {}'.format(lab_dict))
                 if lab_dict is None:
                     return None
 

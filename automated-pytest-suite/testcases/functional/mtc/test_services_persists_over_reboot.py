@@ -15,14 +15,15 @@ from consts.timeout import VMTimeout
 from keywords import host_helper, system_helper, vm_helper, network_helper
 from testfixtures.recover_hosts import HostsToRecover
 
-
+@mark.test_case_id(100)
+@mark.test_case_description("Verify lock unlock active controller")
 @mark.usefixtures('check_alarms')
 @mark.parametrize('host_type', [
     param('controller', marks=mark.sanity),
     'compute',
     # 'storage'
 ])
-def test_system_persist_over_host_reboot(host_type):
+def test_system_persist_over_host_reboot(host_type, record_property):
     """
     Validate Inventory summary over reboot of one of the controller see if
     data persists over reboot

@@ -1,0 +1,126 @@
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: dpdknad
+  annotations:
+    k8s.v1.cni.cncf.io/resourceName: intel.com/pci_sriov_net_dpdk
+spec:
+  config: '{
+  "type": "sriov",
+  "name": "mf-vfio",
+  "spoofchk": "off",
+  "trust": "on"
+}'
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pktgen
+  labels:
+    app: pktgen
+  annotations:
+    k8s.v1.cni.cncf.io/networks: '[
+       {"name": "dpdknad"}
+    ]'
+spec:
+  nodeName: controller-0
+  restartPolicy: Never
+  imagePullSecrets:
+   - name: registry-creds
+  containers:
+  - name: pktgen
+    env:
+      - name: PKG_CONFIG_PATH
+        value: '/usr/local/lib64/pkgconfig'
+    image: registry.central:9001/ps_emea/dpdk-pktgen-and-apps:20.11
+    imagePullPolicy: IfNotPresent
+    workingDir: /opt/pktgen-dpdk-pktgen-20.11.3
+    volumeMounts:
+    - mountPath: /mnt/huge-2048
+      name: hugepage
+    - name: lib-modules
+      mountPath: /lib/modules
+    - name: src
+      mountPath: /usr/src
+    command: ["/bin/bash", "-ec", "sleep infinity"]
+    securityContext:
+      privileged: false
+      capabilities:
+        add:
+          ["IPC_LOCK", "SYS_ADMIN"]
+    resources:
+      requests:
+        memory: 4Gi
+        hugepages-1Gi: 4Gi
+        intel.com/pci_sriov_net_dpdk: '1'
+        windriver.com/isolcpus: 2
+      limits:
+        memory: 4Gi
+        hugepages-1Gi: 4Gi
+        intel.com/pci_sriov_net_dpdk: '1'
+        windriver.com/isolcpus: 2
+  volumes:
+  - name: hugepage
+    emptyDir:
+        medium: HugePages
+  - name: lib-modules
+    hostPath:
+      path: /lib/modules
+  - name: src
+    hostPath:
+      path: /usr/src
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: testpmd
+  labels:
+   app: testpmd
+  annotations:
+    k8s.v1.cni.cncf.io/networks: '[
+       {"name": "dpdknad"}
+    ]'
+spec:
+  restartPolicy: Never
+  nodeName: controller-1
+  imagePullSecrets:
+   - name: registry-creds
+  containers:
+  - name: testpmd
+    image: registry.central:9001/ps_emea/dpdk-pktgen-and-apps:20.11
+    imagePullPolicy: IfNotPresent
+    workingDir: /opt/dpdk-20.11/build/app/
+    volumeMounts:
+    - mountPath: /mnt/huge-2048
+      name: hugepage
+    - name: lib-modules
+      mountPath: /lib/modules
+    - name: src
+      mountPath: /usr/src
+    command: ["/bin/bash", "-ec", "sleep infinity"]
+    securityContext:
+      privileged: false
+      capabilities:
+        add:
+          ["IPC_LOCK", "SYS_ADMIN"]
+    resources:
+      requests:
+        memory: 4Gi
+        hugepages-1Gi: 4Gi
+        intel.com/pci_sriov_net_dpdk: '1'
+        windriver.com/isolcpus: 2
+      limits:
+        memory: 4Gi
+        hugepages-1Gi: 4Gi
+        intel.com/pci_sriov_net_dpdk: '1'
+        windriver.com/isolcpus: 2
+  volumes:
+  - name: hugepage
+    emptyDir:
+        medium: HugePages
+  - name: lib-modules
+    hostPath:
+      path: /lib/modules
+  - name: src
+    hostPath:
+      path: /usr/src

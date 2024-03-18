@@ -190,3 +190,24 @@ class CpuRtErr:
                            ' pinning policy'
     RT_MASK_SHARED_VCPU_CONFLICT = 'hw:wrs:shared_vcpu .* is not a subset of ' \
                                    'non-realtime vCPUs'
+
+
+class UnlockHostErr:
+    APPLYING_APP = (
+        r'^Rejected: Can not unlock host .* while an application '
+        'is being applied, updated or recovered. Please try again later.'
+    )
+
+
+class SNMPErr:
+    GET_INVALID_OID = 'No Such Object available on this agent at this OID'
+    INVALID_DES_PASSWORD = 'Timeout: No Response from '
+    INVALID_MD5_PASSWORD = 'snmp{}: Authentication failure (incorrect password, community or key)'
+    INVALID_OID = '= No more variables left in this MIB View (It is past the end of the MIB tree)'
+    INVALID_USERNAME = 'snmp{}: Unknown user name'
+    INVALID_RESULT_SWAP= "swap"
+    INVALID_SNMP_RESULT_INTEGER = "INTEGER: 0"
+
+class InterfaceErr:
+    INVALID_PARENT_IF_CLASS = 'interfaces must be created over an interface of class {}'
+    CLASS_MODIFY_WHEN_IF_CONFIG = "and therefore the interface class cannot be changed from '{}'."

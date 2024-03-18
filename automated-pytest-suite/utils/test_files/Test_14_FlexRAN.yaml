@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fl0
+  annotations:
+spec:
+  restartPolicy: Never
+  containers:
+  - name: fl0c1
+    image: zbsarashki/flxr:spr-2211
+    imagePullPolicy: IfNotPresent
+    volumeMounts:
+    - mountPath: /hugepages
+      name: hugepage
+    - mountPath: /work
+      name: flexwork
+    command: ["/bin/bash", "-ec", "sleep infinity"]
+    securityContext:
+      privileged: true # true Needed for tests
+      capabilities:
+        add:
+          ["IPC_LOCK", "SYS_ADMIN"]
+    resources:
+      requests:
+        memory: 64Gi
+        hugepages-1Gi: 7Gi
+        intel.com/intel_acc100_fec: '1'
+        windriver.com/isolcpus: 30
+      limits:
+        memory: 100Gi
+        intel.com/intel_acc100_fec: '1'
+        hugepages-1Gi: 7Gi
+        windriver.com/isolcpus: 30
+  volumes:
+  - name: hugepage
+    emptyDir:
+        medium: HugePages
+  - name: flexwork
+    hostPath:
+      path: /opt/backups/work
+  nodeName: controller-0

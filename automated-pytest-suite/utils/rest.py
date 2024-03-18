@@ -32,14 +32,15 @@ class Rest:
             post                     perform HTTP POST
     """
 
-    def __init__(self, serviceName, platform=False):
+    def __init__(self, serviceName, platform=False,cert_file=None,validateSSL=True):
         """
         Initiate an object for handling REST calls.
         Args:
             serviceName -
 
         """
-        auth_info = Tenant.get('admin_platform') if platform else Tenant.get(
+
+        self.auth_info = Tenant.get('admin_platform') if platform else Tenant.get(
             'admin')
         self.token = ""
         self.token_payload = ""
@@ -48,24 +49,26 @@ class Rest:
                                                      service_name=serviceName,
                                                      interface="public",
                                                      region=self.region,
-                                                     auth_info=auth_info)[0]
+                                                     auth_info=self.auth_info)[0]
         self.ksURL = keystone_helper.get_endpoints(field='URL',
                                                    service_name='keystone',
                                                    interface="public",
                                                    region=self.region,
-                                                   auth_info=auth_info)[0]
+                                                   auth_info=self.auth_info)[0]
         self.cert_path = None
-        self.verify = True
-        self.is_https = CliAuth.get_var('HTTPS')
-        if self.is_https:
-            self.verify = False
-            cert_path = os.path.join(ProjVar.get_var('TEMP_DIR'),
-                                     'server-with-key.pem')
-            if not os.path.exists(cert_path):
-                cert_path = security_helper.fetch_cert_file(scp_to_local=True)
-            self.cert_path = cert_path
-            if cert_path:
-                self.verify = cert_path
+        self.verify = validateSSL
+
+        if self.verify:
+            self.is_https = CliAuth.get_var('HTTPS')
+            if self.is_https:
+                self.verify = False
+                cert_path = os.path.join(ProjVar.get_var('TEMP_DIR'),
+                                         'server-with-key.pem')
+                if not os.path.exists(cert_path):
+                    cert_path = security_helper.fetch_cert_file(scp_to_local=True,cert_file=cert_file)
+                self.cert_path = cert_path
+                if cert_path:
+                    self.verify = cert_path
 
         self.generate_token_request()
         self.retrieve_token('/auth/tokens')
@@ -80,7 +83,7 @@ class Rest:
                        '{"identity":{"methods": ["password"],'
                        '"password": {"user": {"domain":'
                        '{"name": "Default"},"name":'
-                       '"admin","password":"St8rlingX*"}}},'
+                           '"admin","password":"'+self.auth_info.get('password')+'"}}},'
                        '"scope":{"project": {"name":'
                        '"admin","domain": {"name":"Default"}'
                        '}}}}')

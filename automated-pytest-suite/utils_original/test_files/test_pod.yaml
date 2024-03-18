@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pod1
+spec:
+  imagePullSecrets:
+    - name: registry-creds
+  containers:
+   - name: test-pod
+     image: registry.central:9001/ps_emea/centos:latest
+     command: ["/bin/sh","-c", "--"]
+     args: ["while true; do sleep 10; done;"]
+

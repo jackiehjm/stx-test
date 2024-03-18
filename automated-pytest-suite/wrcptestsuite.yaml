@@ -1,0 +1,72 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test-config
+  namespace: test
+data:
+ lab.json: |
+   {
+    "cloud_1": {
+    "short_name": "cloud1",
+    "name": "cloud1.com",
+    "floating ip": "128.224.211.36",
+    "controller-0 ip": "128.224.211.35",
+    "controller-1 ip": "128.224.211.37"
+    },
+    "cloud_2": {
+    "short_name": "cloud2",
+    "name": "cloud2.com",
+    "floating ip": "128.224.211.36",
+    "controller-0 ip": "128.224.211.35",
+    "controller-1 ip": "128.224.211.37"
+    }
+   }
+ stx-test_template.conf: |
+   [auth]
+   oam_floating_ip =
+   controller0_oam_ip =
+   controller1_oam_ip =
+   linux_username = sysadmin
+   linux_user_password = Wind2022@
+   # Platform keystone admin user and project info
+   platform_admin_username = admin
+   platform_admin_project_name = admin
+   platform_admin_password = Wind2022@
+   platform_admin_domain_name = Default
+
+   [natbox]
+   natbox_host = localhost
+   natbox_user = tester
+   natbox_password = tester
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: wrcptestsuite
+  namespace: test
+spec:
+  nodeName: controller-0
+  imagePullSecrets:
+   - name: registry-creds
+  containers:
+   - name: wrcptestsuite
+     image: registry.local:9001/ps_emea/wrcptestsuite:22.22
+     volumeMounts:
+       - name: test-config
+         mountPath: /root/test-config/
+     env:
+       - name: SOURCE_OPENRC
+         value: "True"
+       - name: IS_SIMPLEX
+         value: "False"
+       - name: IS_DC
+         value: "False"
+       - name: INCLUDE
+         value: "cloud_1 cloud_2"
+     imagePullPolicy: Always
+     command: ["bash", "/usr/wrcptestsuite/bin/entrypoint.sh"]
+  volumes:
+     - name: test-config
+       configMap:
+         name: test-config

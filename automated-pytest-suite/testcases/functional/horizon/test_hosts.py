@@ -65,7 +65,7 @@ def format_uptime(uptime):
     elif uptime > week:
         return '{} month'.format(uptime_months, uptime_weeks)
 
-
+@mark.skip(reason="Skipping this due to horizon network connectivity issue")
 @mark.platform_sanity
 def test_horizon_host_inventory_display(host_inventory_pg):
     """

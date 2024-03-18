@@ -681,3 +681,6 @@ class VSwitchType:
 
 class Container:
     LOCAL_DOCKER_REG = 'registry.local:9001'
+
+class SRIOV:
+    SRIOV_DEVICE_PLUGIN_POD_NAME = "kube-sriov-device-plugin"

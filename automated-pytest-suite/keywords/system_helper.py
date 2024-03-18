@@ -177,7 +177,7 @@ def get_computes(administrative=None, operational=None, availability=None,
     nodes.
 
     """
-    return get_hosts(personality='compute', administrative=administrative,
+    return get_hosts(personality='worker', administrative=administrative,
                      operational=operational,
                      availability=availability, con_ssh=con_ssh,
                      auth_info=auth_info)
@@ -251,13 +251,13 @@ def get_hosts(personality=None, administrative=None, operational=None,
         table_ = table_parser.filter_table(table_, hostname=hostname)
 
     if personality:
-        compute_personality = 'compute|worker'
-        if personality == 'compute':
+        compute_personality = 'worker'
+        if personality == 'worker':
             personality = compute_personality
         elif not isinstance(personality, str):
             personality = list(personality)
             if 'compute' in personality:
-                compute_index = personality.index('compute')
+                compute_index = personality.index('worker')
                 personality[compute_index] = compute_personality
 
     filters = {'personality': personality,
@@ -338,10 +338,10 @@ def get_hosts_per_personality(availability=None, administrative=None,
     table_ = table_parser.table(
         cli.system('host-list', ssh_client=con_ssh, auth_info=auth_info,
                    source_openrc=source_rc)[1])
-    personalities = ('controller', 'compute', 'storage')
+    personalities = ('controller', 'worker', 'storage')
     res = {}
     for personality in personalities:
-        personality_tmp = 'compute|worker' if personality == 'compute' else \
+        personality_tmp = 'worker' if personality == 'worker' else \
             personality
         hosts = table_parser.get_values(table_, 'hostname',
                                         personality=personality_tmp,
@@ -352,7 +352,7 @@ def get_hosts_per_personality(availability=None, administrative=None,
         res[personality] = hosts
 
     if rtn_tuple:
-        res = res['controller'], res['compute'], res['storage']
+        res = res['controller'], res['worker'], res['storage']
 
     return res
 
@@ -411,6 +411,7 @@ def get_active_standby_controllers(con_ssh=None,
 
     table_ = table_parser.filter_table(table_,
                                        service_group_name='controller-services')
+    LOG.info("system_helper.py line 414 table_ = {}".format(table_))
     active_con = table_parser.get_values(table_, 'hostname', state='active',
                                          strict=False)[0]
     standby_con = table_parser.get_values(table_, 'hostname', state='standby',
@@ -2829,7 +2830,7 @@ def wait_and_clear_config_out_of_date_alarms(
 
     if not hosts:
         if not host_type:
-            host_type = ('controller', 'compute', 'storage')
+            host_type = ('controller', 'worker', 'storage')
         elif isinstance(host_type, str):
             host_type = (host_type,)
 
@@ -3528,3 +3529,22 @@ def get_system_iplist():
         iplist = ["[{}]".format(i) for i in ip]
         ip = iplist
     return ip
+
+
+def get_oam_ip(node, con_ssh=None, auth_info=Tenant.get('admin_platform')):
+    table_ = table_parser.table(
+                 cli.system('oam-show', ssh_client=con_ssh, auth_info=auth_info)[1])
+
+    table_ = table_parser.filter_table(table_, Property='{}'.format(node))
+    oam_ip = table_parser.get_values(table_, 'Value', strict=False)[0]
+    LOG.info("OAM IP of node {} is {}".format(node, oam_ip))
+    return oam_ip
+
+def get_idrac_ip_and_subnet(con_ssh=None):
+    _, output = con_ssh.exec_sudo_cmd("sudo ipmitool lan print")
+    result_dict = dict(map(str.strip, line.split(':', 1)) for line in output.split('\n') if ':' in line)
+    idrac_ip = result_dict['IP Address']
+    subnet_mask = result_dict['Subnet Mask']
+    LOG.info("IDRAC IP {}".format(idrac_ip))
+    LOG.info("Subnet Mask {}".format(subnet_mask))
+    return idrac_ip, subnet_mask

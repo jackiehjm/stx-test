@@ -86,7 +86,7 @@ def wait_for_timestamp_update(auth_info, prev_timestamp=None, expt_time=None):
         return None
 
 
-def test_dc_modify_timezone(prev_check):
+def test_dc_modify_timezone(prev_check, record_property):
     """
     Test timezone modify on system controller and subcloud. Ensure timezone change is not
     propagated.
@@ -107,6 +107,9 @@ def test_dc_modify_timezone(prev_check):
         - Ensure host created_at timestamp is reverted to original
 
     """
+    record_property("test_case_id", "100")
+    record_property("test_case_description", "Test timezone modify on system controller and subcloud")
+    record_property("distributed_cloud", "True")     
     prev_central_time, prev_sub_time, central_zone, sub_zone, central_auth, subcloud_auth, \
         subcloud = prev_check
 

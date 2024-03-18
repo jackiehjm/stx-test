@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "docker-static-site.name" . }}
+  labels:
+    app: {{ include "docker-static-site.name" . }}
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 80
+      nodePort: {{ .Values.service.nodePort }}
+  selector:
+    app: {{ include "docker-static-site.name" . }}

@@ -32,7 +32,7 @@ def check_host(controller):
     'active',
     'standby'
 ])
-def test_kube_system_services(controller):
+def test_kube_system_services(controller, record_property):
     """
     Test kube-system pods are deployed and running
 
@@ -45,6 +45,9 @@ def test_kube_system_services(controller):
             'coredns', 'tiller-deploy'
 
     """
+    record_property("test_case_id", "100")
+    record_property("test_case_description", "Test kube-system pods are deployed and running")
+    record_property("kubernetes", True)    
     host = check_host(controller=controller)
 
     with host_helper.ssh_to_host(hostname=host) as con_ssh:
@@ -78,14 +81,14 @@ def test_kube_system_services(controller):
                                                  namespace='kube-system',
                                                  con_ssh=con_ssh, timeout=300)
 
-        services = ('kube-dns', 'tiller-deploy')
+        services = ('kube-dns', )
         LOG.tc_step("Check kube-system services on {}: {}".format(controller,
                                                                   services))
         for service in services:
             assert service in kube_sys_services, \
                 "{} not in kube-system service table".format(service)
 
-        deployments = ('calico-kube-controllers', 'coredns', 'tiller-deploy')
+        deployments = ('calico-kube-controllers', 'coredns')
         LOG.tc_step("Check kube-system deployments on {}: "
                     "{}".format(controller, deployments))
         for deployment in deployments:

@@ -37,7 +37,7 @@ def swact_precheck(request):
     return subcloud, managed_subclouds
 
 
-def test_dc_swact_host(swact_precheck, check_central_alarms):
+def test_dc_swact_host(swact_precheck, check_central_alarms, record_property):
     """
     Test host swact on central region
     Args:
@@ -51,6 +51,9 @@ def test_dc_swact_host(swact_precheck, check_central_alarms):
     Teardown:
         - Manage unmanaged subclouds
     """
+    record_property("test_case_id", "100")
+    record_property("test_case_description", "Test host swact on central region")
+    record_property("distributed_cloud", "True")       
     primary_subcloud, managed_subcloud = swact_precheck
     ssh_central = ControllerClient.get_active_controller(name="RegionOne")
 

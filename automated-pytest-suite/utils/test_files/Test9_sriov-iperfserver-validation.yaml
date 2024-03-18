@@ -1,0 +1,43 @@
+apiVersion: "k8s.cni.cncf.io/v1" 
+kind: NetworkAttachmentDefinition 
+metadata: 
+  name: srif0net0 
+  annotations: 
+    k8s.v1.cni.cncf.io/resourceName: intel.com/pci_sriov_net_physnet0 
+spec: 
+  config: '{ 
+      "cniVersion": "0.3.0", 
+      "type": "sriov", 
+      "ipam": { 
+         "type": "static", 
+         "addresses": [{ 
+            "address": "100.56.217.112/24", 
+            "gateway": "100.56.217.1" 
+          }], 
+         "routes": [{ 
+            "dst": "0.0.0.0/0" 
+         }] 
+      } 
+  }' 
+--- 
+ 
+apiVersion: v1 
+kind: Pod 
+metadata: 
+  name: iperf-server 
+  annotations: 
+    k8s.v1.cni.cncf.io/networks: '[ 
+      { "name": "srif0net0" } 
+    ]' 
+spec: 
+  containers: 
+  - name: server 
+    image: centos/tools 
+    imagePullPolicy: IfNotPresent 
+    command: [ "/bin/bash", "-c", "--" ] 
+    args: [ "while true; do sleep 300000; done;" ] 
+    resources: 
+      requests: 
+        intel.com/pci_sriov_net_physnet0: '1' 
+      limits: 
+        intel.com/pci_sriov_net_physnet0: '1'

@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cyclictest
+spec:
+  nodeName: worker-99
+  containers:
+  - name: cyclictest
+    image: registry.central:9001/ps_emea/cyclictest:v2.2
+    imagePullPolicy: IfNotPresent
+    command: ["/bin/bash", "-ec", "sleep infinity"]
+    securityContext:
+      privileged: true
+      capabilities:
+        add:
+        - SYS_NICE
+        - IPC_LOCK
+    resources:
+      requests:
+        windriver.com/isolcpus: 12
+        memory: "4Gi"
+      limits:
+        windriver.com/isolcpus: 12
+        memory: "4Gi"
+#  tolerations:
+#    - effect: type
+#      key: high-throughput
+#      operator: Equal
+#      value: true
+  imagePullSecrets:
+    - name: registry-creds

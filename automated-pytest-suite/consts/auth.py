@@ -354,3 +354,28 @@ class CliAuth:
                              format(valid_vars))
 
         return cls.__var_dict[var_name]
+
+
+
+class Idrac:
+
+    __var_dict = {
+        'IDRAC_USER': '',
+        'IDRAC_PASSWORD': '',
+        }
+
+    @classmethod
+    def set_vars(cls, **kwargs):
+
+        for key in kwargs:
+            cls.__var_dict[key.upper()] = kwargs[key]
+
+    @classmethod
+    def get_var(cls, var_name):
+        var_name = var_name.upper()
+        valid_vars = cls.__var_dict.keys()
+        if var_name not in valid_vars:
+            raise ValueError("Invalid var_name. Valid vars: {}".
+                             format(valid_vars))
+
+        return cls.__var_dict[var_name]

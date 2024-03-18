@@ -1,0 +1,93 @@
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: sriov-static-pod
+  annotations:
+    k8s.v1.cni.cncf.io/resourceName: intel.com/pci_sriov_net_f1c
+spec:
+  config: '{
+          "type": "sriov",
+          "ipam": {
+                 "type": "static",
+                 "addresses": [ { "address": "25.25.25.12/24" } ]
+          }
+        }'
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pod-sriov
+  annotations:
+    k8s.v1.cni.cncf.io/networks:  sriov-static-pod
+spec:
+  containers:
+  - name: test-pod-sriov
+    image:  registry.central:9001/ps_emea/centos:latest
+    imagePullPolicy: IfNotPresent
+    command: [ "/bin/bash", "-c", "--" ]
+    args: [ "while true; do sleep 300000; done;" ]
+    securityContext:
+      privileged: true
+      capabilities:
+        add:
+        - ALL
+    resources:
+      requests:
+        intel.com/pci_sriov_net_dpdk: '1'
+      limits:
+        intel.com/pci_sriov_net_dpdk: '1'
+  imagePullSecrets:
+    - name: registry-creds
+  nodeName: worker-99
+  tolerations:
+   - effect: NoSchedule
+     key: high-throughput
+     operator: Equal
+     value: "true"
+---
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: sriov-static-pod2
+  annotations:
+    k8s.v1.cni.cncf.io/resourceName: intel.com/pci_sriov_net_f1c
+spec:
+  config: '{
+  "type": "sriov",
+  "ipam": {
+     "type": "static",
+     "addresses": [ { "address": "25.25.25.24/24" } ]
+  }
+}'
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pod-sriov2
+  annotations:
+    k8s.v1.cni.cncf.io/networks:  sriov-static-pod2
+spec:
+  containers:
+  - name: test-pod-sriov2
+    image:  registry.central:9001/ps_emea/centos:latest
+    imagePullPolicy: IfNotPresent
+    command: [ "/bin/bash", "-c", "--" ]
+    args: [ "while true; do sleep 300000; done;" ]
+    securityContext:
+      privileged: true
+      capabilities:
+        add:
+        - ALL
+    resources:
+      requests:
+        intel.com/pci_sriov_net_dpdk: '1'
+      limits:
+        intel.com/pci_sriov_net_dpdk: '1'
+  imagePullSecrets:
+    - name: registry-creds
+  nodeName: worker-99
+  tolerations:
+   - effect: NoSchedule
+     key: high-throughput
+     operator: Equal
+     value: "true"

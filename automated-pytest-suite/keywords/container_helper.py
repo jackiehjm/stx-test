@@ -877,3 +877,43 @@ def is_stx_openstack_deployed(applied_only=False, con_ssh=None,
             res = False
 
     return res
+
+def load_docker_image(name,imagename, tag=None, digest=None, con_ssh=None, timeout=300,
+                      fail_ok=False):
+    """
+    Load docker image via docker load. Verify image is listed in docker
+    image list.
+    Args:
+        name:
+        tag:
+        digest:
+        con_ssh:
+        timeout:
+        fail_ok:
+
+    Returns (tuple):
+        (0, <docker image ID>)
+        (1, <std_err>)
+
+    """
+
+    args = '{}'.format(name.strip())
+    if tag:
+        args += ':{}'.format(tag)
+    elif digest:
+        args += '@{}'.format(digest)
+
+    LOG.info("Load docker image {}".format(args))
+    code, out = exec_docker_cmd('load < ', args, timeout=timeout,
+                                fail_ok=fail_ok, con_ssh=con_ssh)
+    if code != 0:
+        return 1, out
+
+    image_id = get_docker_images(repo=imagename, tag=tag, field='IMAGE ID',
+                                 con_ssh=con_ssh, fail_ok=False)[0]
+    LOG.info(
+        'docker image {} successfully loaded. ID: {}'.format(args, image_id))
+
+    return 0, image_id
+
+

@@ -12,10 +12,9 @@ from consts.reasons import SkipSysType
 from keywords import host_helper, system_helper, vm_helper, network_helper, \
     kube_helper
 
-
 @mark.sanity
 @mark.cpe_sanity
-def test_swact_controllers(wait_for_con_drbd_sync_complete):
+def test_swact_controllers(wait_for_con_drbd_sync_complete, record_property):
     """
     Verify swact active controller
 
@@ -92,8 +91,9 @@ def test_swact_controllers(wait_for_con_drbd_sync_complete):
                                             pre_standby_controller), timeout=30)
 
 
+
 @mark.platform_sanity
-def test_swact_controller_platform(wait_for_con_drbd_sync_complete):
+def test_swact_controller_platform(wait_for_con_drbd_sync_complete, record_property):
     """
     Verify swact active controller
 
@@ -103,6 +103,9 @@ def test_swact_controller_platform(wait_for_con_drbd_sync_complete):
         - Verify nodes are ready in kubectl get nodes
 
     """
+    record_property("test_case_id", "3.2.5")
+    record_property("test_case_description", "VValidate the ability of platform to recover from outage")
+
     if system_helper.is_aio_simplex():
         skip("Simplex system detected")
 

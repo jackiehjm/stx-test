@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?><testsuite errors="0" failures="0" name="pytest" skips="0" tests="1" time="228.411"><testcase classname="hw_validation_testcases.custom_test_cases.test_13_Performance_Storage" file="hw_validation_testcases/custom_test_cases/test_13_Performance_Storage.py" line="10" name="test_storage_performance[controller-1]" time="192.16795659065247"><system-out>
+-----------
+Setup started:
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Test steps started:
+
+-----------
+Teardown started:
+</system-out><system-err>[2023-10-31 20:26:11,978] 19   INFO  MainThread conftest.setup_test_session:: 
+====================== Setup Step 1: (session) Setting up test session...
+[2023-10-31 20:26:11,978] 67   INFO  MainThread setups.setup_primary_tenant:: Primary Tenant for test session is set to tenant1
+[2023-10-31 20:26:12,111] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+SW_VERSION=&quot;22.12&quot;
+BUILD_TARGET=&quot;Host Installer&quot;
+BUILD_TYPE=&quot;Formal&quot;
+BUILD_ID=&quot;2022-12-19_02-22-00&quot;
+SRC_BUILD_ID=&quot;38&quot;
+
+JOB=&quot;wrcp-22.12-debian&quot;
+BUILD_BY=&quot;jenkins&quot;
+BUILD_NUMBER=&quot;50&quot;
+BUILD_HOST=&quot;yow-wrcp-lx.wrs.com&quot;
+BUILD_DATE=&quot;2022-12-19 07:22:00 +0000&quot;
+[2023-10-31 20:26:12,526] 1524 INFO  MainThread ssh.set_natbox_client:: NatBox localhost ssh client is set
+[2023-10-31 20:26:12,526] 1472 INFO  MainThread ssh.get_natbox_client:: Getting NatBox Client...
+[2023-10-31 20:26:12,526] 104  INFO  MainThread setups.setup_keypair:: stx-openstack is not applied. Skip nova keypair config.
+[2023-10-31 20:26:18,379] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
++------------------------+-------------------------------------------------------------------------+
+| Property               | Value                                                                   |
++------------------------+-------------------------------------------------------------------------+
+| action                 | none                                                                    |
+| administrative         | unlocked                                                                |
+| apparmor               | disabled                                                                |
+| availability           | failed                                                                  |
+| bm_ip                  | 147.11.88.211                                                           |
+| bm_type                | dynamic                                                                 |
+| bm_username            | windriver                                                               |
+| boot_device            | /dev/disk/by-path/pci-0000:00:00.5-pci-10000:8b:00.0-nvme-1             |
+| capabilities           | {&apos;is_max_cpu_configurable&apos;: &apos;configurable&apos;, &apos;stor_function&apos;: &apos;monitor&apos;, |
+|                        | &apos;Personality&apos;: &apos;Controller-Standby&apos;}                                    |
+| clock_synchronization  | ptp                                                                     |
+| config_applied         | 1a9920d3-332a-420e-b9b6-3eff0e6234c2                                    |
+| config_status          | None                                                                    |
+| config_target          | 1a9920d3-332a-420e-b9b6-3eff0e6234c2                                    |
+| console                | ttyS0,115200                                                            |
+| created_at             | 2023-10-20T20:57:03.562888+00:00                                        |
+| device_image_update    | None                                                                    |
+| hostname               | controller-0                                                            |
+| hw_settle              | 0                                                                       |
+| id                     | 1                                                                       |
+| install_output         | graphical                                                               |
+| install_state          | None                                                                    |
+| install_state_info     | None                                                                    |
+| inv_state              | inventoried                                                             |
+| invprovision           | provisioned                                                             |
+| location               | {}                                                                      |
+| max_cpu_mhz_allowed    | 3600                                                                    |
+| max_cpu_mhz_configured | None                                                                    |
+| mgmt_ip                | 7.0.5.3                                                                 |
+| mgmt_mac               | 50:7c:6f:5a:f9:2c                                                       |
+| operational            | disabled                                                                |
+| personality            | controller                                                              |
+| reboot_needed          | False                                                                   |
+| reserved               | False                                                                   |
+| rootfs_device          | /dev/disk/by-path/pci-0000:00:00.5-pci-10000:8b:00.0-nvme-1             |
+| serialid               | None                                                                    |
+| software_load          | 22.12                                                                   |
+| subfunction_avail      | failed                                                                  |
+| subfunction_oper       | disabled                                                                |
+| subfunctions           | controller,worker,lowlatency                                            |
+| task                   | Configuration failure, threshold reached, Lock/Unlock to retry          |
+| tboot                  |                                                                         |
+| ttys_dcd               | False                                                                   |
+| updated_at             | 2023-10-31T20:26:23.347183+00:00                                        |
+| uptime                 | 5485                                                                    |
+| uuid                   | a5ae74e8-5d56-495a-9ead-e2cd897d4cc0                                    |
+| vim_progress_status    | services-disabled                                                       |
++------------------------+-------------------------------------------------------------------------+
+[2023-10-31 20:26:18,509] 124  INFO  MainThread system_helper.is_aio_system:: This is small footprint system.
+[2023-10-31 20:26:24,703] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
++----+--------------+-------------+----------------+-------------+--------------+
+| id | hostname     | personality | administrative | operational | availability |
++----+--------------+-------------+----------------+-------------+--------------+
+| 1  | controller-0 | controller  | unlocked       | disabled    | failed       |
+| 2  | controller-1 | controller  | unlocked       | enabled     | available    |
++----+--------------+-------------+----------------+-------------+--------------+
+[2023-10-31 20:26:24,834] 49   INFO  MainThread system_helper.get_sys_type:: ============= System type: AIO-DX ==============
+[2023-10-31 20:26:24,835] 1561 INFO  MainThread ssh.get_active_controller:: lab_dict = {&apos;short_name&apos;: &apos;cloud1&apos;, &apos;name&apos;: &apos;cloud1.com&apos;, &apos;floating ip&apos;: &apos;147.11.90.211&apos;, &apos;controller-0 ip&apos;: &apos;147.11.89.211&apos;, &apos;controller-1 ip&apos;: &apos;147.11.89.212&apos;}
+[2023-10-31 20:26:30,813] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
++----+--------------+-------------+----------------+-------------+--------------+
+| id | hostname     | personality | administrative | operational | availability |
++----+--------------+-------------+----------------+-------------+--------------+
+| 1  | controller-0 | controller  | unlocked       | disabled    | failed       |
+| 2  | controller-1 | controller  | unlocked       | enabled     | available    |
++----+--------------+-------------+----------------+-------------+--------------+
+[2023-10-31 20:26:30,944] 323  INFO  MainThread setups._rsync_files_to_con1:: rsync test files from controller-0 to controller-1 if not already done
+[2023-10-31 20:26:30,944] 1561 INFO  MainThread ssh.get_active_controller:: lab_dict = {&apos;short_name&apos;: &apos;cloud1&apos;, &apos;name&apos;: &apos;cloud1.com&apos;, &apos;floating ip&apos;: &apos;147.11.90.211&apos;, &apos;controller-0 ip&apos;: &apos;147.11.89.211&apos;, &apos;controller-1 ip&apos;: &apos;147.11.89.212&apos;}
+[2023-10-31 20:26:31,076] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+controller-1
+[2023-10-31 20:26:31,208] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+stat: cannot statx &apos;/home/sysadmin/images/tis-centos-guest.img&apos;: No such file or directory
+[2023-10-31 20:26:31,338] 1561 INFO  MainThread ssh.get_active_controller:: lab_dict = {&apos;short_name&apos;: &apos;cloud1&apos;, &apos;name&apos;: &apos;cloud1.com&apos;, &apos;floating ip&apos;: &apos;147.11.90.211&apos;, &apos;controller-0 ip&apos;: &apos;147.11.89.211&apos;, &apos;controller-1 ip&apos;: &apos;147.11.89.212&apos;}
+[2023-10-31 20:26:31,469] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+controller-1
+[2023-10-31 20:26:31,598] 1237 INFO  MainThread ssh.connect :: Attempt to connect to controller-0 from 147.11.90.211...
+[2023-10-31 20:26:32,069] 1270 INFO  MainThread ssh.connect :: Successfully connected to controller-0 from 147.11.90.211!
+[2023-10-31 20:26:32,200] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+[2023-10-31 20:26:32,460] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+[2023-10-31 20:26:32,592] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+[2023-10-31 20:26:32,723] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+controller-0
+[2023-10-31 20:26:32,723] 348  INFO  MainThread setups._rsync_files_to_con1:: rsync files from controller-0 to controller-1...
+[2023-10-31 20:26:33,342] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+0
+[2023-10-31 20:26:33,472] 367  INFO  MainThread setups._rsync_files_to_con1:: Test files are successfully copied to controller-1 from controller-0
+[2023-10-31 20:26:33,735] 1309 INFO  MainThread ssh.close   :: ssh session to controller-0 is closed and returned to parent session 147.11.90.211
+[2023-10-31 20:26:33,739] 14   INFO  MainThread test_13_Performance_Storage.test_storage_performance:: 
+====================== Test Step 1: Checking system health
+[2023-10-31 20:26:33,739] 1561 INFO  MainThread ssh.get_active_controller:: lab_dict = {&apos;short_name&apos;: &apos;cloud1&apos;, &apos;name&apos;: &apos;cloud1.com&apos;, &apos;floating ip&apos;: &apos;147.11.90.211&apos;, &apos;controller-0 ip&apos;: &apos;147.11.89.211&apos;, &apos;controller-1 ip&apos;: &apos;147.11.89.212&apos;}
+[2023-10-31 20:26:51,029] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+System Health:
+All hosts are provisioned: [OK]
+All hosts are unlocked/enabled: [Fail]
+Locked or disabled hosts: controller-0
+All hosts have current configurations: [OK]
+All hosts are patch current: [OK]
+Ceph Storage Healthy: [Fail]
+No alarms: [Fail]
+[19] alarms found, [17] of which are management affecting and [0] are certificate expiration alarms. Use &quot;fm alarm-list&quot; for details
+All kubernetes nodes are ready: [OK]
+All kubernetes control plane pods are ready: [OK]
+
+[2023-10-31 20:26:51,162] 17   INFO  MainThread test_13_Performance_Storage.test_storage_performance:: 
+====================== Test Step 2: Retrieving Active Controller
+[2023-10-31 20:26:51,162] 1561 INFO  MainThread ssh.get_active_controller:: lab_dict = {&apos;short_name&apos;: &apos;cloud1&apos;, &apos;name&apos;: &apos;cloud1.com&apos;, &apos;floating ip&apos;: &apos;147.11.90.211&apos;, &apos;controller-0 ip&apos;: &apos;147.11.89.211&apos;, &apos;controller-1 ip&apos;: &apos;147.11.89.212&apos;}
+[2023-10-31 20:26:59,646] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
++--------------------------------------+-----------------------------+--------------+----------+
+| uuid                                 | service_group_name          | hostname     | state    |
++--------------------------------------+-----------------------------+--------------+----------+
+| 2d8dff47-d282-4b7e-b976-da96d3688426 | cloud-services              | controller-1 | active   |
+| cd459db0-ef78-4847-9079-b1944a318f16 | cloud-services              | controller-0 | standby  |
+| 467eb7db-819c-470c-bfd0-d87ea6259906 | controller-services         | controller-1 | active   |
+| e413845e-ebb4-4c92-a2eb-9082e7aeef8f | controller-services         | controller-0 | standby  |
+| 0066f652-8ae6-4b4c-bf1d-65846b4346f2 | directory-services          | controller-1 | active   |
+| 5ad6ec59-7662-4170-b723-64514152ea32 | directory-services          | controller-0 | disabled |
+| f826adcd-e41f-4ac2-a94e-a09ab40666f6 | distributed-cloud-services  | controller-1 | active   |
+| 43f49771-5298-4900-9818-1d17ce172254 | distributed-cloud-services  | controller-0 | standby  |
+| 11455709-2596-459e-8767-e1b2a1c2387c | oam-services                | controller-1 | active   |
+| 15bc02f1-fed0-4a77-adc4-5d8b5b08b2ec | oam-services                | controller-0 | standby  |
+| abf25a5a-74e6-4531-b559-7780eb201f2c | patching-services           | controller-1 | active   |
+| d5d818b1-abd8-46c5-9ca3-7c990c642a9c | patching-services           | controller-0 | standby  |
+| 728b7eb6-d913-414c-b4e9-b66039972534 | storage-monitoring-services | controller-1 | active   |
+| 26fef98d-e96b-4588-becb-d3e3bef8c724 | storage-monitoring-services | controller-0 | standby  |
+| 90810bdc-43b1-4eaf-a4e0-d990e3f30263 | storage-services            | controller-1 | active   |
+| 3da9709b-fbf2-439b-b0cf-12898684b755 | storage-services            | controller-0 | disabled |
+| 625b1797-3b32-429d-8f84-56969c3b4985 | vim-services                | controller-1 | active   |
+| de36c13e-0d0f-4444-92cf-3c32c1438a12 | vim-services                | controller-0 | standby  |
+| c8c22640-df97-4af1-9963-130b1e0c0877 | web-services                | controller-1 | active   |
+| ad45199b-f08a-46d0-9509-e702bbce90f7 | web-services                | controller-0 | disabled |
++--------------------------------------+-----------------------------+--------------+----------+
+[2023-10-31 20:26:59,778] 414  INFO  MainThread system_helper.get_active_standby_controllers:: system_helper.py line 414 table_ = {&apos;headers&apos;: [&apos;uuid&apos;, &apos;service_group_name&apos;, &apos;hostname&apos;, &apos;state&apos;], &apos;values&apos;: [[&apos;467eb7db-819c-470c-bfd0-d87ea6259906&apos;, &apos;controller-services&apos;, &apos;controller-1&apos;, &apos;active&apos;], [&apos;e413845e-ebb4-4c92-a2eb-9082e7aeef8f&apos;, &apos;controller-services&apos;, &apos;controller-0&apos;, &apos;standby&apos;]]}
+[2023-10-31 20:26:59,779] 1561 INFO  MainThread ssh.get_active_controller:: lab_dict = {&apos;short_name&apos;: &apos;cloud1&apos;, &apos;name&apos;: &apos;cloud1.com&apos;, &apos;floating ip&apos;: &apos;147.11.90.211&apos;, &apos;controller-0 ip&apos;: &apos;147.11.89.211&apos;, &apos;controller-1 ip&apos;: &apos;147.11.89.212&apos;}
+[2023-10-31 20:26:59,923] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+controller-1
+[2023-10-31 20:26:59,923] 23   INFO  MainThread test_13_Performance_Storage.test_storage_performance:: 
+====================== Test Step 3: Finding SR-IOV capable interfaces
+[2023-10-31 20:26:59,923] 1561 INFO  MainThread ssh.get_active_controller:: lab_dict = {&apos;short_name&apos;: &apos;cloud1&apos;, &apos;name&apos;: &apos;cloud1.com&apos;, &apos;floating ip&apos;: &apos;147.11.90.211&apos;, &apos;controller-0 ip&apos;: &apos;147.11.89.211&apos;, &apos;controller-1 ip&apos;: &apos;147.11.89.212&apos;}
+[2023-10-31 20:27:01,844] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+persistentvolumeclaim/pv-fio created
+[2023-10-31 20:27:01,974] 26   INFO  MainThread test_13_Performance_Storage.test_storage_performance:: Waiting for Persistent Volume to Create
+[2023-10-31 20:27:04,522] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+3.26: Pulling from joshuarobinson/fio
+
+#x1B[1A#x1B[2K540db60ca938: Pulling fs layer #x1B[1B
+#x1B[1A#x1B[2K9a4ba3a62492: Pulling fs layer #x1B[1B#x1B[2A#x1B[2K540db60ca938: Downloading [&gt;                                                  ]  28.75kB/2.812MB#x1B[2B#x1B[2A#x1B[2K540db60ca938: Verifying Checksum #x1B[2B#x1B[2A#x1B[2K540db60ca938: Download complete #x1B[2B#x1B[2A#x1B[2K540db60ca938: Extracting [&gt;                                                  ]  32.77kB/2.812MB#x1B[2B#x1B[2A#x1B[2K540db60ca938: Extracting [==============================&gt;                    ]  1.704MB/2.812MB#x1B[2B#x1B[2A#x1B[2K540db60ca938: Extracting [==================================================&gt;]  2.812MB/2.812MB#x1B[2B#x1B[2A#x1B[2K540db60ca938: Pull complete #x1B[2B#x1B[1A#x1B[2K9a4ba3a62492: Downloading [&gt;                                                  ]  40.18kB/3.894MB#x1B[1B#x1B[1A#x1B[2K9a4ba3a62492: Downloading [=======&gt;                                           ]  569.9kB/3.894MB#x1B[1B#x1B[1A#x1B[2K9a4ba3a62492: Downloading [========================&gt;                          ]  1.893MB/3.894MB#x1B[1B#x1B[1A#x1B[2K9a4ba3a62492: Downloading [==================================================&gt;]  3.894MB/3.894MB#x1B[1B#x1B[1A#x1B[2K9a4ba3a62492: Download complete #x1B[1B#x1B[1A#x1B[2K9a4ba3a62492: Extracting [&gt;                                                  ]  65.54kB/3.894MB#x1B[1B#x1B[1A#x1B[2K9a4ba3a62492: Extracting [====&gt;                                              ]  327.7kB/3.894MB#x1B[1B#x1B[1A#x1B[2K9a4ba3a62492: Extracting [==================================================&gt;]  3.894MB/3.894MB#x1B[1B#x1B[1A#x1B[2K9a4ba3a62492: Pull complete #x1B[1BDigest: sha256:385c8a3d9020f5028c7b80d189179fd442da7702f9cc2f722b6bbf4fe777cee7
+Status: Downloaded newer image for joshuarobinson/fio:3.26
+docker.io/joshuarobinson/fio:3.26
+[2023-10-31 20:27:04,653] 28   INFO  MainThread test_13_Performance_Storage.test_storage_performance:: Pulling Image
+[2023-10-31 20:28:04,712] 31   INFO  MainThread test_13_Performance_Storage.test_storage_performance:: Generating read operations for OS drive
+[2023-10-31 20:28:04,713] 1561 INFO  MainThread ssh.get_active_controller:: lab_dict = {&apos;short_name&apos;: &apos;cloud1&apos;, &apos;name&apos;: &apos;cloud1.com&apos;, &apos;floating ip&apos;: &apos;147.11.90.211&apos;, &apos;controller-0 ip&apos;: &apos;147.11.89.211&apos;, &apos;controller-1 ip&apos;: &apos;147.11.89.212&apos;}
+[2023-10-31 20:29:16,820] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+84.5
+21.2
+[2023-10-31 20:29:16,951] 36   INFO  MainThread test_13_Performance_Storage.test_storage_performance:: 
+====================== Test Step 4: Read IOPS is: 84.5
+[2023-10-31 20:29:16,951] 37   INFO  MainThread test_13_Performance_Storage.test_storage_performance:: 
+====================== Test Step 5: Write IOPS is: 21.2
+[2023-10-31 20:29:17,384] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+persistentvolumeclaim &quot;pv-fio&quot; deleted
+[2023-10-31 20:29:17,825] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+Deleted Containers:
+71808502641f0fa0d72dd9fbcb4c7169f21fa7d43374137f870fdcda941cf628
+fd8032956ba86e2161f1b9a99b976f5d604e5e6d69a9c66875c6586e50ccf3df
+
+Total reclaimed space: 8.59GB
+</system-err></testcase></testsuite>

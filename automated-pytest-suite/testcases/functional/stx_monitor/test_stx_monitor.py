@@ -398,7 +398,7 @@ def are_monitor_pods_running(system_type, con_ssh=None, auth_info=Tenant.get('ad
 
 @mark.skipif(not stx_monitor_file_exist(), reason="Missing stx-monitor tar file from system")
 @mark.platform_sanity
-def test_stx_monitor(setup_app):
+def test_stx_monitor(setup_app, record_property):
     """
     Test stx-monitor application
 
@@ -448,7 +448,9 @@ def test_stx_monitor(setup_app):
         Same as Setups above
 
     """
-
+    record_property("test_case_id", "100")
+    record_property("test_case_description", "Test stx-monitor application")
+    record_property("kubernetes", True)  
     system_helper.get_system_values()
     system_type = system_helper.get_sys_type()
 

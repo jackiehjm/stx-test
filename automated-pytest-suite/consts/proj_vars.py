@@ -1,3 +1,4 @@
+import os 
 #
 # Copyright (c) 2019, 2020 Wind River Systems, Inc.
 #
@@ -5,18 +6,15 @@
 #
 
 
-# Please DO NOT import any modules
-
-
 class ProjVar:
     __var_dict = {'BUILD_PATH': None,
                   'LOG_DIR': None,
-                  'SOURCE_OPENRC': False,
+                  'SOURCE_OPENRC': eval(os.getenv('SOURCE_OPENRC',default=True)),
                   'SW_VERSION': [],
                   'PATCH': None,
                   'SESSION_ID': None,
                   'CGCS_DB': True,
-                  'IS_SIMPLEX': False,
+                  'IS_SIMPLEX': eval(os.getenv('IS_SIMPLEX', default=False)),
                   'KEYSTONE_DEBUG': False,
                   'TEST_NAME': None,
                   'PING_FAILURE': False,
@@ -33,20 +31,23 @@ class ProjVar:
                   'USER_FILE_DIR': '~/',
                   'NO_TEARDOWN': False,
                   'VSWITCH_TYPE': None,
-                  'IS_DC': False,
-                  'PRIMARY_SUBCLOUD': None,
-                  'SUBCLOUD_LIST': None,
+                  'IS_DC': eval(os.getenv('IS_DC', default=False)),
+                  'PRIMARY_SUBCLOUD': 'caas1-sc1-dell',
+                  'SUBCLOUD_LIST': ['caas1-sc2-hp','caas1-sc1-dell'],
                   'BUILD_INFO': {},
                   'TEMP_DIR': '',
                   'INSTANCE_BACKING': {},
-                  'OPENSTACK_DEPLOYED': None,
+                  'OPENSTACK_DEPLOYED': False,
                   'DEFAULT_INSTANCE_BACKING': None,
                   'STX_KEYFILE_PATH': '~/.ssh/id_rsa',
                   'IPV6_OAM': None,
+                  'IDRAC':{},
+                  'CHK_IF_REQ_INT_CFG': True,
+                  'SRIOV_ENABLED': True
                   }
 
     @classmethod
-    def init_vars(cls, lab, natbox, logdir, tenant, collect_all, always_collect,
+    def init_vars(cls, lab, natbox, idrac,logdir, tenant, collect_all, always_collect,
                   horizon_visible):
 
         labname = lab['short_name']
@@ -64,6 +65,7 @@ class ProjVar:
             'PRIMARY_TENANT': tenant,
             'LAB': lab,
             'NATBOX': natbox,
+            'IDRAC':idrac,
             'COLLECT_ALL': collect_all,
             'ALWAYS_COLLECT': always_collect,
             'HORIZON_VISIBLE': horizon_visible

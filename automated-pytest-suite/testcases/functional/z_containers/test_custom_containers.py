@@ -72,13 +72,13 @@ def delete_test_pod():
     LOG.info("Delete {} pod if exists".format(POD_NAME))
     kube_helper.delete_resources(resource_names=POD_NAME, fail_ok=True)
 
-
+@mark.skip("This test is deprecated")
 @mark.platform_sanity
 @mark.parametrize('controller', [
     'active',
     'standby'
 ])
-def test_launch_pod_via_kubectl(copy_test_apps, delete_test_pod, controller):
+def test_launch_pod_via_kubectl(copy_test_apps, delete_test_pod, controller, record_property):
     """
     Test custom pod apply and delete
     Args:
@@ -98,8 +98,11 @@ def test_launch_pod_via_kubectl(copy_test_apps, delete_test_pod, controller):
             controllers (if applicable)
 
     """
-    host = controller_precheck(controller)
 
+    host = controller_precheck(controller,)
+    record_property("test_case_id", "100")
+    record_property("test_case_description", "Test custom pod apply and delete")
+    record_property("kubernetes", True)
     with host_helper.ssh_to_host(hostname=host) as con_ssh:
         app_path = os.path.join(copy_test_apps, POD_YAML)
         LOG.tc_step('kubectl apply {}, and check {} pod is created and '
@@ -122,8 +125,9 @@ def cleanup_app():
         container_helper.delete_app(app_name=HELM_APP_NAME)
 
 
+@mark.skip("This test is deprecated")
 @mark.platform_sanity
-def test_launch_app_via_sysinv(copy_test_apps, cleanup_app):
+def test_launch_app_via_sysinv(copy_test_apps, cleanup_app, record_property):
     """
     Test upload, apply, remove, delete custom app via system cmd
     Args:
@@ -144,6 +148,9 @@ def test_launch_app_via_sysinv(copy_test_apps, cleanup_app):
         - system application-delete test app from system
 
     """
+    record_property("test_case_id", "100")
+    record_property("test_case_description", "Test upload, apply, remove, delete custom app via system cmd")
+    record_property("kubernetes", True)
     app_dir = copy_test_apps
     app_name = HELM_APP_NAME
 
@@ -192,12 +199,12 @@ def remove_cache_and_pull(con_ssh, name, test_image, fail_ok=False):
     container_helper.pull_docker_image(name=name, con_ssh=con_ssh)
 
 
-@mark.platform_sanity
+@mark.skip("This test is deprecated")
 @mark.parametrize('controller', [
     'active',
     'standby'
 ])
-def test_push_docker_image_to_local_registry(controller):
+def test_push_docker_image_to_local_registry(controller, record_property):
     """
     Test push a docker image to local docker registry
     Args:
@@ -219,6 +226,9 @@ def test_push_docker_image_to_local_registry(controller):
         - Pull test image from local registry
 
     """
+    record_property("test_case_id", "100")
+    record_property("test_case_description", "Test push a docker image to local docker registry")
+    record_property("kubernetes", True)
     test_image = 'busybox'
     reg_addr = Container.LOCAL_DOCKER_REG
     host = controller_precheck(controller)
@@ -279,8 +289,9 @@ def test_push_docker_image_to_local_registry(controller):
 
 # Taking out following test case until a shared file server is available for
 # community and test charts are available to public
+@mark.skip("This test is deprecated")
 @mark.platform_sanity
-def test_upload_charts_via_helm_upload(copy_test_apps):
+def test_upload_charts_via_helm_upload(copy_test_apps, record_property):
     """
     Test upload helm charts via helm-upload cmd directly. i.e., without
     using sysinv cmd.
@@ -296,6 +307,9 @@ def test_upload_charts_via_helm_upload(copy_test_apps):
             controllers (if applicable)
 
     """
+    record_property("test_case_id", "100")
+    record_property("test_case_description", "Test upload helm charts via helm-upload cmd directly")
+    record_property("kubernetes", True)
     app_dir = copy_test_apps
 
     LOG.tc_step("Upload helm charts via helm-upload cmd from active controller "
@@ -318,10 +332,10 @@ def test_upload_charts_via_helm_upload(copy_test_apps):
 def deploy_delete_kubectl_app(request):
     app_name = 'resource-consumer'
     app_params = \
-        '--image=gcr.io/kubernetes-e2e-test-images/resource-consumer:1.4' \
+        '--image=registry.local:9001/ps_emea/resource-consumer:1.9' \
         + ' --expose' \
-        + ' --service-overrides=' \
-        + "'{ " + '"spec": { "type": "LoadBalancer" } }' \
+        + ' --overrides=' \
+        + "'{ " + '"spec": { "imagePullSecrets": [{"name": "registry-creds"}] } }' \
         + "' --port 8080 --requests='cpu=1000m,memory=1024Mi'"
 
     LOG.fixture_step("Create {} test app by kubectl run".format(app_name))
@@ -336,7 +350,7 @@ def deploy_delete_kubectl_app(request):
         LOG.fixture_step("Delete {} pod if exists after test "
                          "run".format(app_name))
         kube_helper.delete_resources(resource_names=app_name,
-                                     resource_types=('deployment', 'service'),
+                                     resource_types=('pods', 'service'),
                                      namespace='default', post_check=False)
         kube_helper.wait_for_resources_gone(resource_names=pod_name,
                                             namespace='default')
@@ -348,7 +362,7 @@ def deploy_delete_kubectl_app(request):
 
 
 @mark.platform_sanity
-def test_host_operations_with_custom_kubectl_app(deploy_delete_kubectl_app):
+def test_host_operations_with_custom_kubectl_app(deploy_delete_kubectl_app, record_property):
     """
     Test create, delete custom app via kubectl run cmd
     Args:
@@ -366,6 +380,9 @@ def test_host_operations_with_custom_kubectl_app(deploy_delete_kubectl_app):
         - Verify pod is removed
 
     """
+    record_property("test_case_id", "100")
+    record_property("test_case_description", "Test create, delete custom app via kubectl run cmd")
+    record_property("kubernetes", True)
     app_name, pod_name = deploy_delete_kubectl_app
     active, standby = system_helper.get_active_standby_controllers()
 

@@ -23,7 +23,8 @@ from pytest import skip
 from consts.auth import Tenant, TestFileServer, HostLinuxUser
 from consts.stx import Prompt
 from consts.proj_vars import ProjVar
-from utils import exceptions
+from keywords import system_helper
+from utils import cli, exceptions, table_parser
 from utils.clients.ssh import ControllerClient, NATBoxClient, SSHClient, \
     get_cli_client
 from utils.tis_log import LOG
@@ -853,7 +854,69 @@ def get_lab_fip(region=None):
 
     return oam_fip
 
+def convert_sshout_to_table(out):
+    """
+        Returns the ssh cli output in list
+        Args:
+            out(str): cli output
+        Return(list):
+            returns the list data
+    """
+    rows = out.split("\n")
+    hdrlist = (rows[0].split())
+    list1 = []
+    list1.append(hdrlist)
+    for i in range(1, len(rows)):
+        r = []
+        for c in range(0, len(hdrlist)):
+            try:
+                r.append(rows[i][out.index(hdrlist[c]):out.index(hdrlist[c + 1])].strip())
+            except:
+                r.append(rows[i][out.index(hdrlist[c]):len(rows[i])].strip())
+        if (r[0]) == "":
+            continue
+        list1.append(r)
+    return (list1)
 
 def get_dnsname(region='RegionOne'):
     # means that the dns name is unreachable
     return None
+
+
+def parse_table_to_dict(table, col_count=2, key=0, value=1):
+    table_dict = dict()
+    for row in table.split("\n"):
+
+        if "--" not in row and row != '':
+            row_list = [item.strip() for item in row.split("|") if item != '']
+            if len(row_list) == col_count:
+                table_dict[row_list[key]] = row_list[value]
+    return table_dict
+
+
+def validate_cyclictest_out(out, maxlatency=20):
+    assert "No such file" not in out,"CyclicTest result file not generated"
+    out=out.split("\n")
+    ispresent=False
+    for line in out:
+        if "Max Latencies" in line:
+            ispresent=True
+            latencies = line[line.index(":") + 1:].split()
+            for l in latencies:
+                assert (int(l)) <= maxlatency, "Latency is more than {}".format(maxlatency)
+    assert ispresent,"Max Latency info not present in file"
+
+
+
+def tar_untar_file(con_ssh,action="tar",tarname=None, dir=""):
+    if action=="tar":
+        con_ssh.exec_cmd("cd /home/sysadmin; tar -czvf {} {}".format(tarname,dir), fail_ok=False)
+    elif action == "untar":
+        con_ssh.exec_cmd("cd /home/sysadmin; tar -zxvf {}".format(tarname), fail_ok=False)
+
+def clear_alarm_by_id(alarm_id, con_ssh):
+    if alarm_id in str(system_helper.get_alarms_table()):
+        table_ = table_parser.table(cli.fm('alarm-list "--uuid" --query alarm_id={}'.format(alarm_id), ssh_client=con_ssh, auth_info=Tenant.get('admin_platform'))[1])
+        value = table_parser.get_values(table_, target_header="UUID")[0]
+        LOG.info("Clearing alarm {}".format(value))
+        cli.fm('alarm-delete {}'.format(value), ssh_client=con_ssh, auth_info=Tenant.get('admin_platform'))

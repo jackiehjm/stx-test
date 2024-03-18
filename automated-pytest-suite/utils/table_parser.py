@@ -418,7 +418,7 @@ def _get_values(table_, header1, value1, header2, strict=False, regex=False):
     Returns (list):
 
     """
-
+    LOG.info("Start of Get Values")
     # get a list of rows where header1 contains value1
     column1 = get_column(table_, header1)
     row_indexes = []
@@ -435,7 +435,7 @@ def _get_values(table_, header1, value1, header2, strict=False, regex=False):
 
     column2 = get_column(table_, header2)
     value2 = [column2[i] for i in row_indexes]
-    LOG.debug("Returning matching {} value(s): {}".format(header2, value2))
+    LOG.info("Returning matching {} value(s): {}".format(header2, value2))
     return value2
 
 

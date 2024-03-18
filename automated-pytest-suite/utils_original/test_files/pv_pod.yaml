@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: task-pv-pod
+spec:
+  imagePullSecrets:
+  - name: registry-creds
+  volumes:
+    - name: task-pv-storage
+      persistentVolumeClaim:
+        claimName: task-pv-claim
+  containers:
+    - name: task-pv-container
+      image: registry.central:9001/ps_emea/centos:latest
+      command: ["/bin/sh","-c", "--"]
+      args: ["while true; do sleep 10; done;"]
+      volumeMounts:
+        - mountPath: "/usr/share/"
+          name: task-pv-storage
+  nodeName: worker-99

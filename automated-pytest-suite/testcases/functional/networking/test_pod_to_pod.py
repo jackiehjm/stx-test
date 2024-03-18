@@ -139,7 +139,9 @@ def get_pod_ips(pods):
 @mark.platform_sanity
 @mark.dc_subcloud
 class TestPodtoPod:
-    def test_pod_to_pod_connection(self, deploy_test_pods):
+    def test_pod_to_pod_connection(self, deploy_test_pods, record_property):
+        record_property("test_case_id", "100")
+        record_property("test_case_description", "Verify Ping test between pods")
         """
         Verify Ping test between pods
         Args:

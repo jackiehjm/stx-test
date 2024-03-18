@@ -158,3 +158,6 @@ class MiscTimeout:
 class K8sTimeout:
     APP_UPLOAD = 300
     APP_APPLY = 600
+
+class DeviceImageTimeout:
+    COMPLETE = 180

@@ -1,0 +1,8 @@
+authorText: "Docker Static Site"
+replicaCount: 1
+image:
+  repository: registry.central:9001/ps_emea/centos
+  tag: latest
+  secret: registry-creds
+service:
+  nodePort: 31121

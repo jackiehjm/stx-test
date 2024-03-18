@@ -88,7 +88,7 @@ def ensure_synced(subclouds_to_test, check_central_alarms):
     'change_order',
     'remove_one_server',
 ))
-def test_dc_dns_modify(ensure_synced, scenario):
+def test_dc_dns_modify(ensure_synced, scenario, record_property):
     """
     Update DNS servers on central region and check it is propagated to subclouds
     Args:
@@ -110,6 +110,9 @@ def test_dc_dns_modify(ensure_synced, scenario):
         - Reset DNS servers to original value (module)
 
     """
+    record_property("test_case_id", "100")
+    record_property("test_case_description", "Update DNS servers on central region and check it is propagated to subclouds")
+    record_property("distributed_cloud", "True")     
     primary_subcloud, managed_subclouds, prev_dns_servers = ensure_synced
     new_dns_servers = compose_new_dns_servers(scenario=scenario, prev_dns_servers=prev_dns_servers)
 

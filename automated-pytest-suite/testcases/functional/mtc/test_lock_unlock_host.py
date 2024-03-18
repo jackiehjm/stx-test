@@ -13,9 +13,10 @@ from consts.stx import HostOperState, HostAvailState
 from testfixtures.recover_hosts import HostsToRecover
 from keywords import host_helper, system_helper
 
-
+@mark.test_case_id(100)
+@mark.test_case_description("Verify lock unlock active controller")
 @mark.platform_sanity
-def test_lock_active_controller_reject(no_simplex):
+def test_lock_active_controller_reject(no_simplex,record_property):
     """
     Verify lock unlock active controller. Expected it to fail
 
@@ -24,6 +25,8 @@ def test_lock_active_controller_reject(no_simplex):
         - Attempt to lock active controller and ensure it's rejected
 
     """
+    record_property("test_case_id", "100")
+    record_property("test_case_description", "Verify lock unlock active controller")
     LOG.tc_step('Retrieve the active controller from the lab')
     active_controller = system_helper.get_active_controller_name()
     assert active_controller, "No active controller available"
@@ -40,13 +43,15 @@ def test_lock_active_controller_reject(no_simplex):
     assert status == 'unlocked', "Fail: The active controller was locked."
 
 
+@mark.test_case_id(100)
+@mark.test_case_description("Verify lock unlock active controller")
 @mark.parametrize('host_type', [
     param('controller', marks=mark.priorities('platform_sanity',
                                               'sanity', 'cpe_sanity')),
-    param('compute', marks=mark.priorities('platform_sanity')),
+    param('worker', marks=mark.priorities('platform_sanity')),
     param('storage', marks=mark.priorities('platform_sanity')),
 ])
-def test_lock_unlock_host(host_type):
+def test_lock_unlock_host(host_type,record_property):
     """
     Verify lock unlock host
 
@@ -57,37 +62,40 @@ def test_lock_unlock_host(host_type):
         - Unlock selected host and ensure it is successfully unlocked
 
     """
+    record_property("test_case_id", "100")
+    record_property("test_case_description", "Verify lock unlock active controller")
+
     LOG.tc_step("Select a {} node from system if any".format(host_type))
     if host_type == 'controller':
         if system_helper.is_aio_simplex():
-            host = 'controller-0'
+            hosts = ['controller-0']
         else:
-            host = system_helper.get_standby_controller_name()
-            assert host, "No standby controller available"
+            hosts = [system_helper.get_standby_controller_name()]
+            assert hosts, "No standby controller available"
 
     else:
+        '''
         if host_type == 'compute' and system_helper.is_aio_system():
             skip("No compute host on AIO system")
         elif host_type == 'storage' and not system_helper.is_storage_system():
             skip("System does not have storage nodes")
-
+        '''
         hosts = system_helper.get_hosts(personality=host_type,
                                         availability=HostAvailState.AVAILABLE,
                                         operational=HostOperState.ENABLED)
 
         assert hosts, "No good {} host on system".format(host_type)
-        host = hosts[0]
+    for host in hosts:
+      LOG.tc_step("Lock {} host - {} and ensure it is successfully "
+                  "locked".format(host_type, host))
+      HostsToRecover.add(host)
+      host_helper.lock_host(host, swact=False)
 
-    LOG.tc_step("Lock {} host - {} and ensure it is successfully "
-                "locked".format(host_type, host))
-    HostsToRecover.add(host)
-    host_helper.lock_host(host, swact=False)
+      # wait for services to stabilize before unlocking
+      time.sleep(20)
 
-    # wait for services to stabilize before unlocking
-    time.sleep(20)
-
-    # unlock standby controller node and verify controller node is
-    # successfully unlocked
-    LOG.tc_step("Unlock {} host - {} and ensure it is successfully "
-                "unlocked".format(host_type, host))
-    host_helper.unlock_host(host)
+      # unlock standby controller node and verify controller node is
+      # successfully unlocked
+      LOG.tc_step("Unlock {} host - {} and ensure it is successfully "
+                  "unlocked".format(host_type, host))
+      host_helper.unlock_host(host)

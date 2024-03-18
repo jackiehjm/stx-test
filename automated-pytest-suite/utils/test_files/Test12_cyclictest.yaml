@@ -1,0 +1,33 @@
+apiVersion: v1 
+kind: Pod 
+metadata: 
+  name: cyclictest 
+spec: 
+  affinity: 
+    nodeAffinity: 
+      requiredDuringSchedulingIgnoredDuringExecution: 
+        nodeSelectorTerms: 
+        - matchExpressions: 
+          - key: kube-cpu-mgr-policy 
+            operator: In 
+            values: 
+            - static 
+  containers: 
+  - name: cyclictest 
+    image: windse/wrcp-eval:v0.1.0 
+    imagePullPolicy: IfNotPresent 
+    command: ["/bin/bash", "-ec", "sleep infinity"] 
+    securityContext: 
+      privileged: true 
+      capabilities: 
+        add: 
+        - SYS_NICE 
+        - IPC_LOCK 
+    resources: 
+      requests: 
+        windriver.com/isolcpus: 18 
+        memory: "1Gi" 
+      limits: 
+        windriver.com/isolcpus: 18 
+        memory: "1Gi" 
+  nodeName: controller-0

@@ -43,7 +43,7 @@ def revert_https(request):
     return origin_https_sub, origin_https_central, central_auth, sub_auth, use_dnsname
 
 
-def test_dc_modify_https(revert_https):
+def test_dc_modify_https(revert_https, record_property):
     """
     Test enable/disable https
 
@@ -61,6 +61,9 @@ def test_dc_modify_https(revert_https):
         - Revert https config on central and subcloud
 
     """
+    record_property("test_case_id", "100")
+    record_property("test_case_description", "Test enable/disable https")
+    record_property("distributed_cloud", "True")        
     origin_https_sub, origin_https_central, central_auth, sub_auth, use_dnsname = revert_https
     subcloud = ProjVar.get_var('PRIMARY_SUBCLOUD')
 

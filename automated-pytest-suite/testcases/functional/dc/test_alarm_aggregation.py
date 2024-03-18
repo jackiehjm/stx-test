@@ -94,7 +94,7 @@ def add_routes_to_subcloud(subcloud, subcloud_table, fail_ok=False):
             cli.system(command, ssh_client=ssh_client, fail_ok=fail_ok)
 
 
-def test_dc_alarm_aggregation_managed(subcloud_to_test):
+def test_dc_alarm_aggregation_managed(subcloud_to_test, record_property):
     """
     Test Alarm Aggregation on Distributed Cloud
     Args:
@@ -112,7 +112,9 @@ def test_dc_alarm_aggregation_managed(subcloud_to_test):
         - Ensure relative alarm cleared on subcloud
         - Ensure system alarm-summary on subcloud matches dcmanager alarm summary on system
     """
-
+    record_property("test_case_id", "100")
+    record_property("test_case_description", "Test Alarm Aggregation on Distributed Cloud")
+    record_property("distributed_cloud", "True")
     ssh_client = ControllerClient.get_active_controller(name=subcloud_to_test)
     LOG.tc_step("Raise alarm on subcloud: {}".format(subcloud_to_test))
     ssh_client.exec_cmd(
@@ -123,7 +125,7 @@ def test_dc_alarm_aggregation_managed(subcloud_to_test):
     alarm_summary_add_and_del(subcloud_to_test)
 
 
-def test_dc_fault_scenario(subcloud_to_test):
+def test_dc_fault_scenario(subcloud_to_test, record_property):
     """
     Test Fault Scenario on Distributed Cloud
     Args:
@@ -153,6 +155,9 @@ def test_dc_fault_scenario(subcloud_to_test):
         - Ensure system alarm-summary on subcloud matches dcmanager alarm summary on system
         controller
     """
+    record_property("test_case_id", "100")
+    record_property("test_case_description", "Test Fault Scenario on Distributed Cloud")
+    record_property("distributed_cloud", "True")    
     ssh_central = ControllerClient.get_active_controller(name="RegionOne")
     ssh_subcloud = ControllerClient.get_active_controller(name=subcloud_to_test)
     subcloud_table = {}
@@ -216,7 +221,7 @@ def test_dc_fault_scenario(subcloud_to_test):
         check_alarm_summary_match_subcloud(subcloud=subcloud_to_test)
 
 
-def test_dc_stress_alarm(subcloud_to_test):
+def test_dc_stress_alarm(subcloud_to_test, record_property):
     """
     Test Stress Scenario on Distributed Cloud
     Args:
@@ -241,6 +246,9 @@ def test_dc_stress_alarm(subcloud_to_test):
         - Ensure system alarm-summary on subcloud matches dcmanager alarm summary on system
         controller
     """
+    record_property("test_case_id", "100")
+    record_property("test_case_description", "Test Stress Scenario on Distributed Cloud")
+    record_property("distributed_cloud", "True")    
     ssh_client = ControllerClient.get_active_controller(name=subcloud_to_test)
 
     # Step 1

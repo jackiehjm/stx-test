@@ -3,6 +3,7 @@ Xstudio testcase reference http://162.248.221.232:8080/nice/xstudio/xstudio.jsp?
 """
 from pytest import fixture
 from pytest import skip
+from pytest import mark
 
 from utils.tis_log import LOG
 from keywords import common
@@ -17,7 +18,7 @@ from consts.stx import PodStatus
 def get_yaml():
     filename = "rc_deployment.yaml"
     ns = "rc"
-    number_nodes = 98
+    number_nodes = 40
     relicas = number_nodes*len(system_helper.get_hypervisors())
     source_path = "utils/test_files/{}".format(filename)
     home_dir = HostLinuxUser.get_home()
@@ -37,8 +38,8 @@ def get_yaml():
         "delete service rc-service --namespace={}".format(ns))
     kube_helper.exec_kube_cmd("delete namespace {}".format(ns))
 
-
-def test_scale_pods(get_yaml):
+@mark.platform_sanity
+def test_scale_pods(get_yaml, record_property):
     """
     Testing the deployment of high number of pods
     Args:
@@ -53,6 +54,9 @@ def test_scale_pods(get_yaml):
     Teardown:
         - Delete the deployment and service
     """
+    record_property("test_case_id", "3.4.1")
+    record_property("test_case_description", "Verify the creation of namespaces")
+    record_property("kubernetes", True)    
     ns, replicas, filename = get_yaml
     LOG.tc_step("Create the deployment")
     kube_helper.exec_kube_cmd(

@@ -1,0 +1,718 @@
+<?xml version="1.0" encoding="utf-8"?><testsuite errors="0" failures="1" name="pytest" skips="0" tests="1" time="161.840"><testcase classname="hw_validation_testcases.custom_test_cases.lock" file="hw_validation_testcases/custom_test_cases/lock.py" line="7" name="test_swact_controllers" time="148.89131450653076"><failure message="utils.exceptions.CLIRejected: CLI command is rejected.
+Details: CLI &apos;openstack hypervisor list&apos; failed to execute. Output: internal endpoint for compute service in akakor.88.131.132 region not found">@mark.hw_validation
+    def test_swact_controllers():
+        if system_helper.is_aio_simplex():
+            skip(&quot;Simplex system detected&quot;)
+    
+        LOG.tc_step(&apos;retrieve active and available controllers&apos;)
+        pre_active_controller, pre_standby_controller = \
+            system_helper.get_active_standby_controllers()
+    
+        LOG.tc_step(&quot;Locking Host&quot;)
+&gt;       host_helper.lock_host(pre_active_controller, swact=True)
+
+hw_validation_testcases/custom_test_cases/lock.py:18: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+keywords/host_helper.py:633: in lock_host
+    swact_host(host, auth_info=auth_info, con_ssh=con_ssh)
+keywords/host_helper.py:1401: in swact_host
+    auth_info=nova_auth)
+keywords/host_helper.py:1534: in wait_for_hypervisors_up
+    hypervisors = get_hypervisors(con_ssh=con_ssh, auth_info=auth_info)
+keywords/host_helper.py:1671: in get_hypervisors
+    auth_info=auth_info)[1])
+utils/cli.py:231: in openstack
+    source_openrc=source_openrc, timeout=timeout)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cmd = &apos;openstack&apos;, sub_cmd = &apos;hypervisor list&apos;, positional_args = &apos;&apos;
+client = &lt;utils.clients.ssh.SSHClient object at 0x7f7905b5b208&gt;
+flags = &quot;--os-username &apos;admin&apos; --os-password &apos;St8rlingX*&apos; --os-project-name admin --os-auth-url http://keystone.openstack.svc....-os-project-domain-name Default --os-identity-api-version 3 --os-interface internal --os-region-name akakor.88.131.132&quot;
+fail_ok = False, cli_dir = &apos;&apos;
+auth_info = {&apos;domain&apos;: &apos;Default&apos;, &apos;password&apos;: &apos;St8rlingX*&apos;, &apos;tenant&apos;: &apos;admin&apos;, &apos;user&apos;: &apos;admin&apos;}
+source_openrc = False, timeout = 600
+
+    def exec_cli(cmd, sub_cmd, positional_args=&apos;&apos;, client=None, flags=&apos;&apos;,
+                 fail_ok=False, cli_dir=&apos;&apos;, auth_info=None,
+                 source_openrc=None, timeout=CLI_TIMEOUT):
+        &quot;&quot;&quot;
+    
+        Args:
+            cmd: such as &apos;neutron&apos;
+            sub_cmd: such as &apos;net-show&apos;
+            client: SSHClient, TelnetClient or LocalHostClient
+            positional_args: string or list.
+                Single arg examples: &apos;arg0&apos; or [&apos;arg0&apos;]
+                Multiple args string example: &apos;arg1 arg2&apos;
+                Multiple args list example: [&apos;arg1&apos;,&apos;arg2&apos;]
+            flags: string or list.
+                Single arg examples: &apos;arg0 value0&apos; or [&apos;arg0 value&apos;]
+                Multiple args string example: &apos;arg1 value1 arg2 value2 arg3&apos;
+                Multiple args list example: [&apos;arg1 value1&apos;,&apos;arg2 value2&apos;, &apos;arg3&apos;]
+            auth_info: (dict) authorization information to run cli commands.
+            source_openrc (None|bool): In general this should NOT be set unless
+            necessary.
+            fail_ok:
+            cli_dir:
+            timeout:
+    
+        Returns:
+            if command executed successfully: return command_output
+            if command failed to execute such as authentication failure:
+                if fail_ok: return exit_code, command_output
+                if not fail_ok: raise exception
+        &quot;&quot;&quot;
+        use_telnet = True if isinstance(client, TelnetClient) else False
+    
+        # Determine region and auth_url
+        raw_cmd = cmd.strip().split()[0]
+        is_dc = ProjVar.get_var(&apos;IS_DC&apos;)
+        platform_cmds = (&apos;system&apos;, &apos;fm&apos;)
+    
+        if auth_info is None:
+            auth_info = Tenant.get_primary()
+    
+        platform = True if auth_info.get(&apos;platform&apos;) else False
+    
+        region = auth_info.get(&apos;region&apos;)
+        dc_region = region if region and is_dc else None
+        default_region_and_url = Tenant.get_region_and_url(platform=platform,
+                                                           dc_region=dc_region)
+    
+        region = region if region else default_region_and_url[&apos;region&apos;]
+        auth_url = auth_info.get(&apos;auth_url&apos;, default_region_and_url[&apos;auth_url&apos;])
+    
+        if is_dc:
+            # Set proper region when cmd is against DC central cloud. This is
+            # needed due to the same auth_info may be
+            # passed to different keywords that require different region
+            if region in (&apos;RegionOne&apos;, &apos;SystemController&apos;):
+                region = &apos;RegionOne&apos; if raw_cmd in platform_cmds else \
+                    &apos;SystemController&apos;
+    
+            # # Reset auth_url if cmd is against DC central cloud RegionOne
+            # containerized services. This is needed due to
+            # # the default auth_url for central controller RegionOne is platform
+            # auth_url
+            # if region == &apos;RegionOne&apos; and not platform:
+            #     auth_url = default_region_and_url[&apos;auth_url&apos;]
+    
+        positional_args = __convert_args(positional_args)
+        flags = __convert_args(flags)
+    
+        if not use_telnet and not client:
+            if is_dc:
+                # This may not exist if cli cmd used before DC vars are initialized
+                client = ControllerClient.get_active_controller(name=region,
+                                                                fail_ok=True)
+    
+            if not client:
+                client = ControllerClient.get_active_controller()
+    
+        if source_openrc is None:
+            source_openrc = ProjVar.get_var(&apos;SOURCE_OPENRC&apos;)
+    
+        if source_openrc:
+            source_file = _get_rc_path(user=auth_info[&apos;user&apos;], platform=platform)
+            if use_telnet:
+                cmd = &apos;source {}; {}&apos;.format(source_file, cmd)
+            else:
+                source_openrc_file(ssh_client=client, auth_info=auth_info,
+                                   rc_file=source_file, fail_ok=fail_ok)
+            flags = &apos;&apos;
+        elif auth_info:
+            # auth params
+            auth_args = (
+                &quot;--os-username &apos;{}&apos; --os-password &apos;{}&apos; --os-project-name {} &quot;
+                &quot;--os-auth-url {} &quot;
+                &quot;--os-user-domain-name Default --os-project-domain-name Default&quot;.
+                format(auth_info[&apos;user&apos;], auth_info[&apos;password&apos;],
+                       auth_info[&apos;tenant&apos;], auth_url))
+    
+            flags = &apos;{} {}&apos;.format(auth_args.strip(), flags.strip())
+    
+        # internal URL handling
+        if raw_cmd in (&apos;openstack&apos;, &apos;sw-manager&apos;):
+            flags += &apos; --os-interface internal&apos;
+        else:
+            flags += &apos; --os-endpoint-type internalURL&apos;
+    
+        # region handling
+        if raw_cmd != &apos;dcmanager&apos;:
+            if raw_cmd == &apos;cinder&apos;:
+                flags += &apos; --os_region_name {}&apos;.format(region)
+            else:
+                flags += &apos; --os-region-name {}&apos;.format(region)
+    
+        complete_cmd = &apos; &apos;.join([os.path.join(cli_dir, cmd), sub_cmd,
+                                 positional_args]).strip()
+    
+        # workaround for dcmanager cmd not supporting --os-project-name
+        if complete_cmd.startswith(&apos;dcmanager&apos;):
+            complete_cmd = complete_cmd.replace(&apos;--os-project-name&apos;,
+                                                &apos;--os-tenant-name&apos;)
+    
+        kwargs = {&apos;searchwindowsize&apos;: 100} if not use_telnet else {}
+        exit_code, cmd_output = client.exec_cmd(complete_cmd,
+                                                expect_timeout=timeout, **kwargs)
+    
+        if exit_code == 0:
+            return 0, cmd_output
+    
+        if fail_ok and exit_code in [1, 2]:
+            return 1, cmd_output
+    
+        raise exceptions.CLIRejected(
+            &quot;CLI &apos;{}&apos; failed to execute. Output: {}&quot;.format(complete_cmd,
+&gt;                                                           cmd_output))
+E       utils.exceptions.CLIRejected: CLI command is rejected.
+E       Details: CLI &apos;openstack hypervisor list&apos; failed to execute. Output: internal endpoint for compute service in akakor.88.131.132 region not found
+
+utils/cli.py:146: CLIRejected</failure><system-out>
+-----------
+Setup started:
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Test steps started:
+
+-----------
+Teardown started:
+</system-out><system-err>[2023-09-15 16:29:23,278] 19   INFO  MainThread conftest.setup_test_session:: 
+====================== Setup Step 1: (session) Setting up test session...
+[2023-09-15 16:29:23,278] 67   INFO  MainThread setups.setup_primary_tenant:: Primary Tenant for test session is set to tenant1
+[2023-09-15 16:29:23,486] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+SW_VERSION=&quot;22.12&quot;
+BUILD_TARGET=&quot;Host Installer&quot;
+BUILD_TYPE=&quot;Formal&quot;
+BUILD_ID=&quot;2022-12-19_02-22-00&quot;
+SRC_BUILD_ID=&quot;38&quot;
+
+JOB=&quot;wrcp-22.12-debian&quot;
+BUILD_BY=&quot;jenkins&quot;
+BUILD_NUMBER=&quot;50&quot;
+BUILD_HOST=&quot;yow-wrcp-lx.wrs.com&quot;
+BUILD_DATE=&quot;2022-12-19 07:22:00 +0000&quot;
+[2023-09-15 16:29:23,924] 1524 INFO  MainThread ssh.set_natbox_client:: NatBox localhost ssh client is set
+[2023-09-15 16:29:23,924] 1472 INFO  MainThread ssh.get_natbox_client:: Getting NatBox Client...
+[2023-09-15 16:29:23,924] 104  INFO  MainThread setups.setup_keypair:: stx-openstack is not applied. Skip nova keypair config.
+[2023-09-15 16:29:28,501] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
++------------------------+-------------------------------------------------------------------------+
+| Property               | Value                                                                   |
++------------------------+-------------------------------------------------------------------------+
+| action                 | none                                                                    |
+| administrative         | unlocked                                                                |
+| apparmor               | disabled                                                                |
+| availability           | available                                                               |
+| bm_ip                  | 147.11.88.131                                                           |
+| bm_type                | dynamic                                                                 |
+| bm_username            | Administrator                                                           |
+| boot_device            | /dev/disk/by-path/pci-0000:c3:00.0-nvme-1                               |
+| capabilities           | {&apos;is_max_cpu_configurable&apos;: &apos;configurable&apos;, &apos;stor_function&apos;: &apos;monitor&apos;, |
+|                        | &apos;Personality&apos;: &apos;Controller-Standby&apos;}                                    |
+| clock_synchronization  | ntp                                                                     |
+| config_applied         | 0760c253-7613-4ba9-961b-6023b61fc495                                    |
+| config_status          | None                                                                    |
+| config_target          | 0760c253-7613-4ba9-961b-6023b61fc495                                    |
+| console                | ttyS0,115200n8                                                          |
+| created_at             | 2023-09-07T18:51:01.664648+00:00                                        |
+| device_image_update    | None                                                                    |
+| hostname               | controller-0                                                            |
+| hw_settle              | 0                                                                       |
+| id                     | 1                                                                       |
+| install_output         | graphical                                                               |
+| install_state          | None                                                                    |
+| install_state_info     | None                                                                    |
+| inv_state              | inventoried                                                             |
+| invprovision           | provisioned                                                             |
+| location               | {}                                                                      |
+| max_cpu_mhz_allowed    | 3500                                                                    |
+| max_cpu_mhz_configured | None                                                                    |
+| mgmt_ip                | 7.0.3.3                                                                 |
+| mgmt_mac               | f0:b2:b9:05:fe:9b                                                       |
+| operational            | enabled                                                                 |
+| personality            | controller                                                              |
+| reboot_needed          | False                                                                   |
+| reserved               | False                                                                   |
+| rootfs_device          | /dev/disk/by-path/pci-0000:c3:00.0-nvme-1                               |
+| serialid               | None                                                                    |
+| software_load          | 22.12                                                                   |
+| subfunction_avail      | available                                                               |
+| subfunction_oper       | enabled                                                                 |
+| subfunctions           | controller,worker,lowlatency                                            |
+| task                   |                                                                         |
+| tboot                  |                                                                         |
+| ttys_dcd               | False                                                                   |
+| updated_at             | 2023-09-15T16:28:09.995013+00:00                                        |
+| uptime                 | 172751                                                                  |
+| uuid                   | 69caf1fd-3cfd-4dfd-8304-1423e42fce64                                    |
+| vim_progress_status    | services-enabled                                                        |
++------------------------+-------------------------------------------------------------------------+
+[2023-09-15 16:29:28,634] 124  INFO  MainThread system_helper.is_aio_system:: This is small footprint system.
+[2023-09-15 16:29:33,519] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
++----+--------------+-------------+----------------+-------------+--------------+
+| id | hostname     | personality | administrative | operational | availability |
++----+--------------+-------------+----------------+-------------+--------------+
+| 1  | controller-0 | controller  | unlocked       | enabled     | available    |
+| 2  | controller-1 | controller  | unlocked       | enabled     | available    |
++----+--------------+-------------+----------------+-------------+--------------+
+[2023-09-15 16:29:33,650] 49   INFO  MainThread system_helper.get_sys_type:: ============= System type: AIO-DX ==============
+[2023-09-15 16:29:33,650] 1561 INFO  MainThread ssh.get_active_controller:: lab_dict = {&apos;short_name&apos;: &apos;cloud1&apos;, &apos;name&apos;: &apos;cloud1.com&apos;, &apos;floating ip&apos;: &apos;147.11.90.131&apos;, &apos;controller-0 ip&apos;: &apos;147.11.89.131&apos;, &apos;controller-1 ip&apos;: &apos;147.11.89.132&apos;}
+[2023-09-15 16:29:33,651] 1584 INFO  MainThread ssh.get_active_controller:: Getting active controller client for no_name
+[2023-09-15 16:29:38,328] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
++----+--------------+-------------+----------------+-------------+--------------+
+| id | hostname     | personality | administrative | operational | availability |
++----+--------------+-------------+----------------+-------------+--------------+
+| 1  | controller-0 | controller  | unlocked       | enabled     | available    |
+| 2  | controller-1 | controller  | unlocked       | enabled     | available    |
++----+--------------+-------------+----------------+-------------+--------------+
+[2023-09-15 16:29:38,460] 323  INFO  MainThread setups._rsync_files_to_con1:: rsync test files from controller-0 to controller-1 if not already done
+[2023-09-15 16:29:38,461] 1561 INFO  MainThread ssh.get_active_controller:: lab_dict = {&apos;short_name&apos;: &apos;cloud1&apos;, &apos;name&apos;: &apos;cloud1.com&apos;, &apos;floating ip&apos;: &apos;147.11.90.131&apos;, &apos;controller-0 ip&apos;: &apos;147.11.89.131&apos;, &apos;controller-1 ip&apos;: &apos;147.11.89.132&apos;}
+[2023-09-15 16:29:38,594] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+controller-1
+[2023-09-15 16:29:38,726] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+stat: cannot statx &apos;/home/sysadmin/images/tis-centos-guest.img&apos;: No such file or directory
+[2023-09-15 16:29:38,858] 1561 INFO  MainThread ssh.get_active_controller:: lab_dict = {&apos;short_name&apos;: &apos;cloud1&apos;, &apos;name&apos;: &apos;cloud1.com&apos;, &apos;floating ip&apos;: &apos;147.11.90.131&apos;, &apos;controller-0 ip&apos;: &apos;147.11.89.131&apos;, &apos;controller-1 ip&apos;: &apos;147.11.89.132&apos;}
+[2023-09-15 16:29:38,988] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+controller-1
+[2023-09-15 16:29:39,119] 1237 INFO  MainThread ssh.connect :: Attempt to connect to controller-0 from 147.11.90.131...
+[2023-09-15 16:29:39,568] 1270 INFO  MainThread ssh.connect :: Successfully connected to controller-0 from 147.11.90.131!
+[2023-09-15 16:29:39,700] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+[2023-09-15 16:29:39,965] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+[2023-09-15 16:29:40,097] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+[2023-09-15 16:29:40,230] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+controller-0
+[2023-09-15 16:29:40,230] 348  INFO  MainThread setups._rsync_files_to_con1:: rsync files from controller-0 to controller-1...
+[2023-09-15 16:29:40,806] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+0
+[2023-09-15 16:29:40,937] 367  INFO  MainThread setups._rsync_files_to_con1:: Test files are successfully copied to controller-1 from controller-0
+[2023-09-15 16:29:41,199] 1309 INFO  MainThread ssh.close   :: ssh session to controller-0 is closed and returned to parent session 147.11.90.131
+[2023-09-15 16:29:41,201] 13   INFO  MainThread lock.test_swact_controllers:: 
+====================== Test Step 1: retrieve active and available controllers
+[2023-09-15 16:29:41,201] 1561 INFO  MainThread ssh.get_active_controller:: lab_dict = {&apos;short_name&apos;: &apos;cloud1&apos;, &apos;name&apos;: &apos;cloud1.com&apos;, &apos;floating ip&apos;: &apos;147.11.90.131&apos;, &apos;controller-0 ip&apos;: &apos;147.11.89.131&apos;, &apos;controller-1 ip&apos;: &apos;147.11.89.132&apos;}
+[2023-09-15 16:29:49,068] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
++--------------------------------------+-----------------------------+--------------+---------+
+| uuid                                 | service_group_name          | hostname     | state   |
++--------------------------------------+-----------------------------+--------------+---------+
+| d244d5f1-e69e-4cdf-b574-edf0086547a7 | cloud-services              | controller-1 | active  |
+| be0ac7b4-e8b7-4cf7-bac9-6b1b7d82b321 | cloud-services              | controller-0 | standby |
+| 46d02347-caaa-4685-9939-81061f5c8a36 | controller-services         | controller-1 | active  |
+| b3cbe651-d1c4-4c70-a155-09c7dcee3e60 | controller-services         | controller-0 | standby |
+| e6c6de79-84f8-4d25-9a2d-1af4502d5d62 | directory-services          | controller-1 | active  |
+| da8c2878-8110-4452-82e0-cff29cc3c508 | directory-services          | controller-0 | active  |
+| 904b6a2f-32a2-48b5-ad1e-9cfe4c9bcceb | distributed-cloud-services  | controller-1 | active  |
+| 0c1178c7-57a4-4727-a708-171a750eb99e | distributed-cloud-services  | controller-0 | standby |
+| 2733f67a-4696-4113-b23d-a696571e2d6e | oam-services                | controller-1 | active  |
+| 8ce0ae86-03df-4d7d-9287-3613d1bc589d | oam-services                | controller-0 | standby |
+| 6643c735-c3c1-41f6-a458-ed5ad023c457 | patching-services           | controller-1 | active  |
+| e007f3b6-fb98-4496-a328-648cb008c954 | patching-services           | controller-0 | standby |
+| 5b047fdb-9a1b-4267-9f10-4e64ac1706cc | storage-monitoring-services | controller-1 | active  |
+| 1360f585-a3ae-4f3b-85da-9c0c24851d61 | storage-monitoring-services | controller-0 | standby |
+| c5e048ee-953d-4ee5-bc17-ccd09bce6093 | storage-services            | controller-1 | active  |
+| 980e4d69-fc24-40a0-823b-875283f4b49e | storage-services            | controller-0 | active  |
+| 875d6d13-4930-42a8-be77-bda58d7b2453 | vim-services                | controller-1 | active  |
+| 77e0a234-cff8-4cb4-a4a4-3b5ef4ae1f43 | vim-services                | controller-0 | standby |
+| cf69eaae-d226-4fbe-a50f-d4339d261251 | web-services                | controller-1 | active  |
+| cbd3a593-92bc-4827-a214-89313812a6b4 | web-services                | controller-0 | active  |
++--------------------------------------+-----------------------------+--------------+---------+
+[2023-09-15 16:29:49,199] 414  INFO  MainThread system_helper.get_active_standby_controllers:: system_helper.py line 414 table_ = {&apos;headers&apos;: [&apos;uuid&apos;, &apos;service_group_name&apos;, &apos;hostname&apos;, &apos;state&apos;], &apos;values&apos;: [[&apos;46d02347-caaa-4685-9939-81061f5c8a36&apos;, &apos;controller-services&apos;, &apos;controller-1&apos;, &apos;active&apos;], [&apos;b3cbe651-d1c4-4c70-a155-09c7dcee3e60&apos;, &apos;controller-services&apos;, &apos;controller-0&apos;, &apos;standby&apos;]]}
+[2023-09-15 16:29:49,200] 17   INFO  MainThread lock.test_swact_controllers:: 
+====================== Test Step 2: Locking Host
+[2023-09-15 16:29:49,200] 1561 INFO  MainThread ssh.get_active_controller:: lab_dict = {&apos;short_name&apos;: &apos;cloud1&apos;, &apos;name&apos;: &apos;cloud1.com&apos;, &apos;floating ip&apos;: &apos;147.11.90.131&apos;, &apos;controller-0 ip&apos;: &apos;147.11.89.131&apos;, &apos;controller-1 ip&apos;: &apos;147.11.89.132&apos;}
+[2023-09-15 16:29:53,451] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
++------------------------+-------------------------------------------------------------------------+
+| Property               | Value                                                                   |
++------------------------+-------------------------------------------------------------------------+
+| action                 | none                                                                    |
+| administrative         | unlocked                                                                |
+| apparmor               | disabled                                                                |
+| availability           | available                                                               |
+| bm_ip                  | 147.11.88.132                                                           |
+| bm_type                | dynamic                                                                 |
+| bm_username            | Administrator                                                           |
+| boot_device            | /dev/disk/by-path/pci-0000:c3:00.0-nvme-1                               |
+| capabilities           | {&apos;is_max_cpu_configurable&apos;: &apos;configurable&apos;, &apos;stor_function&apos;: &apos;monitor&apos;, |
+|                        | &apos;Personality&apos;: &apos;Controller-Active&apos;}                                     |
+| clock_synchronization  | ntp                                                                     |
+| config_applied         | 61113e39-53fb-4fc3-b776-efc85a8483b3                                    |
+| config_status          | None                                                                    |
+| config_target          | 61113e39-53fb-4fc3-b776-efc85a8483b3                                    |
+| console                | ttyS0,115200n8                                                          |
+| created_at             | 2023-09-07T19:23:00.278864+00:00                                        |
+| device_image_update    | None                                                                    |
+| hostname               | controller-1                                                            |
+| hw_settle              | 0                                                                       |
+| id                     | 2                                                                       |
+| install_output         | text                                                                    |
+| install_state          | None                                                                    |
+| install_state_info     | None                                                                    |
+| inv_state              | inventoried                                                             |
+| invprovision           | provisioned                                                             |
+| location               | {}                                                                      |
+| max_cpu_mhz_allowed    | 3500                                                                    |
+| max_cpu_mhz_configured | None                                                                    |
+| mgmt_ip                | 7.0.3.4                                                                 |
+| mgmt_mac               | f0:b2:b9:04:3f:db                                                       |
+| operational            | enabled                                                                 |
+| personality            | controller                                                              |
+| reboot_needed          | False                                                                   |
+| reserved               | False                                                                   |
+| rootfs_device          | /dev/disk/by-path/pci-0000:c3:00.0-nvme-1                               |
+| serialid               | None                                                                    |
+| software_load          | 22.12                                                                   |
+| subfunction_avail      | available                                                               |
+| subfunction_oper       | enabled                                                                 |
+| subfunctions           | controller,worker,lowlatency                                            |
+| task                   |                                                                         |
+| tboot                  |                                                                         |
+| ttys_dcd               | False                                                                   |
+| updated_at             | 2023-09-15T16:28:09.951125+00:00                                        |
+| uptime                 | 679390                                                                  |
+| uuid                   | cf21e3fd-00aa-4f8e-a362-d7e0f4605160                                    |
+| vim_progress_status    | services-enabled                                                        |
++------------------------+-------------------------------------------------------------------------+
+[2023-09-15 16:29:53,583] 1561 INFO  MainThread ssh.get_active_controller:: lab_dict = {&apos;short_name&apos;: &apos;cloud1&apos;, &apos;name&apos;: &apos;cloud1.com&apos;, &apos;floating ip&apos;: &apos;147.11.90.131&apos;, &apos;controller-0 ip&apos;: &apos;147.11.89.131&apos;, &apos;controller-1 ip&apos;: &apos;147.11.89.132&apos;}
+[2023-09-15 16:29:57,686] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
++------------------------+-------------------------------------------------------------------------+
+| Property               | Value                                                                   |
++------------------------+-------------------------------------------------------------------------+
+| action                 | none                                                                    |
+| administrative         | unlocked                                                                |
+| apparmor               | disabled                                                                |
+| availability           | available                                                               |
+| bm_ip                  | 147.11.88.132                                                           |
+| bm_type                | dynamic                                                                 |
+| bm_username            | Administrator                                                           |
+| boot_device            | /dev/disk/by-path/pci-0000:c3:00.0-nvme-1                               |
+| capabilities           | {&apos;is_max_cpu_configurable&apos;: &apos;configurable&apos;, &apos;stor_function&apos;: &apos;monitor&apos;, |
+|                        | &apos;Personality&apos;: &apos;Controller-Active&apos;}                                     |
+| clock_synchronization  | ntp                                                                     |
+| config_applied         | 61113e39-53fb-4fc3-b776-efc85a8483b3                                    |
+| config_status          | None                                                                    |
+| config_target          | 61113e39-53fb-4fc3-b776-efc85a8483b3                                    |
+| console                | ttyS0,115200n8                                                          |
+| created_at             | 2023-09-07T19:23:00.278864+00:00                                        |
+| device_image_update    | None                                                                    |
+| hostname               | controller-1                                                            |
+| hw_settle              | 0                                                                       |
+| id                     | 2                                                                       |
+| install_output         | text                                                                    |
+| install_state          | None                                                                    |
+| install_state_info     | None                                                                    |
+| inv_state              | inventoried                                                             |
+| invprovision           | provisioned                                                             |
+| location               | {}                                                                      |
+| max_cpu_mhz_allowed    | 3500                                                                    |
+| max_cpu_mhz_configured | None                                                                    |
+| mgmt_ip                | 7.0.3.4                                                                 |
+| mgmt_mac               | f0:b2:b9:04:3f:db                                                       |
+| operational            | enabled                                                                 |
+| personality            | controller                                                              |
+| reboot_needed          | False                                                                   |
+| reserved               | False                                                                   |
+| rootfs_device          | /dev/disk/by-path/pci-0000:c3:00.0-nvme-1                               |
+| serialid               | None                                                                    |
+| software_load          | 22.12                                                                   |
+| subfunction_avail      | available                                                               |
+| subfunction_oper       | enabled                                                                 |
+| subfunctions           | controller,worker,lowlatency                                            |
+| task                   |                                                                         |
+| tboot                  |                                                                         |
+| ttys_dcd               | False                                                                   |
+| updated_at             | 2023-09-15T16:28:09.951125+00:00                                        |
+| uptime                 | 679390                                                                  |
+| uuid                   | cf21e3fd-00aa-4f8e-a362-d7e0f4605160                                    |
+| vim_progress_status    | services-enabled                                                        |
++------------------------+-------------------------------------------------------------------------+
+[2023-09-15 16:29:57,818] 1561 INFO  MainThread ssh.get_active_controller:: lab_dict = {&apos;short_name&apos;: &apos;cloud1&apos;, &apos;name&apos;: &apos;cloud1.com&apos;, &apos;floating ip&apos;: &apos;147.11.90.131&apos;, &apos;controller-0 ip&apos;: &apos;147.11.89.131&apos;, &apos;controller-1 ip&apos;: &apos;147.11.89.132&apos;}
+[2023-09-15 16:30:01,975] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
++----+--------------+-------------+----------------+-------------+--------------+
+| id | hostname     | personality | administrative | operational | availability |
++----+--------------+-------------+----------------+-------------+--------------+
+| 1  | controller-0 | controller  | unlocked       | enabled     | available    |
+| 2  | controller-1 | controller  | unlocked       | enabled     | available    |
++----+--------------+-------------+----------------+-------------+--------------+
+[2023-09-15 16:30:02,106] 632  INFO  MainThread host_helper.lock_host:: controller-1 is active controller, swact first before attempt to lock.
+[2023-09-15 16:30:02,106] 1561 INFO  MainThread ssh.get_active_controller:: lab_dict = {&apos;short_name&apos;: &apos;cloud1&apos;, &apos;name&apos;: &apos;cloud1.com&apos;, &apos;floating ip&apos;: &apos;147.11.90.131&apos;, &apos;controller-0 ip&apos;: &apos;147.11.89.131&apos;, &apos;controller-1 ip&apos;: &apos;147.11.89.132&apos;}
+[2023-09-15 16:30:07,937] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
++--------------------------------------+-----------------------------+--------------+---------+
+| uuid                                 | service_group_name          | hostname     | state   |
++--------------------------------------+-----------------------------+--------------+---------+
+| d244d5f1-e69e-4cdf-b574-edf0086547a7 | cloud-services              | controller-1 | active  |
+| be0ac7b4-e8b7-4cf7-bac9-6b1b7d82b321 | cloud-services              | controller-0 | standby |
+| 46d02347-caaa-4685-9939-81061f5c8a36 | controller-services         | controller-1 | active  |
+| b3cbe651-d1c4-4c70-a155-09c7dcee3e60 | controller-services         | controller-0 | standby |
+| e6c6de79-84f8-4d25-9a2d-1af4502d5d62 | directory-services          | controller-1 | active  |
+| da8c2878-8110-4452-82e0-cff29cc3c508 | directory-services          | controller-0 | active  |
+| 904b6a2f-32a2-48b5-ad1e-9cfe4c9bcceb | distributed-cloud-services  | controller-1 | active  |
+| 0c1178c7-57a4-4727-a708-171a750eb99e | distributed-cloud-services  | controller-0 | standby |
+| 2733f67a-4696-4113-b23d-a696571e2d6e | oam-services                | controller-1 | active  |
+| 8ce0ae86-03df-4d7d-9287-3613d1bc589d | oam-services                | controller-0 | standby |
+| 6643c735-c3c1-41f6-a458-ed5ad023c457 | patching-services           | controller-1 | active  |
+| e007f3b6-fb98-4496-a328-648cb008c954 | patching-services           | controller-0 | standby |
+| 5b047fdb-9a1b-4267-9f10-4e64ac1706cc | storage-monitoring-services | controller-1 | active  |
+| 1360f585-a3ae-4f3b-85da-9c0c24851d61 | storage-monitoring-services | controller-0 | standby |
+| c5e048ee-953d-4ee5-bc17-ccd09bce6093 | storage-services            | controller-1 | active  |
+| 980e4d69-fc24-40a0-823b-875283f4b49e | storage-services            | controller-0 | active  |
+| 875d6d13-4930-42a8-be77-bda58d7b2453 | vim-services                | controller-1 | active  |
+| 77e0a234-cff8-4cb4-a4a4-3b5ef4ae1f43 | vim-services                | controller-0 | standby |
+| cf69eaae-d226-4fbe-a50f-d4339d261251 | web-services                | controller-1 | active  |
+| cbd3a593-92bc-4827-a214-89313812a6b4 | web-services                | controller-0 | active  |
++--------------------------------------+-----------------------------+--------------+---------+
+[2023-09-15 16:30:08,069] 414  INFO  MainThread system_helper.get_active_standby_controllers:: system_helper.py line 414 table_ = {&apos;headers&apos;: [&apos;uuid&apos;, &apos;service_group_name&apos;, &apos;hostname&apos;, &apos;state&apos;], &apos;values&apos;: [[&apos;46d02347-caaa-4685-9939-81061f5c8a36&apos;, &apos;controller-services&apos;, &apos;controller-1&apos;, &apos;active&apos;], [&apos;b3cbe651-d1c4-4c70-a155-09c7dcee3e60&apos;, &apos;controller-services&apos;, &apos;controller-0&apos;, &apos;standby&apos;]]}
+[2023-09-15 16:30:08,069] 1561 INFO  MainThread ssh.get_active_controller:: lab_dict = {&apos;short_name&apos;: &apos;cloud1&apos;, &apos;name&apos;: &apos;cloud1.com&apos;, &apos;floating ip&apos;: &apos;147.11.90.131&apos;, &apos;controller-0 ip&apos;: &apos;147.11.89.131&apos;, &apos;controller-1 ip&apos;: &apos;147.11.89.132&apos;}
+[2023-09-15 16:30:13,575] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
++------------------------+-------------------------------------------------------------------------+
+| Property               | Value                                                                   |
++------------------------+-------------------------------------------------------------------------+
+| action                 | none                                                                    |
+| administrative         | unlocked                                                                |
+| apparmor               | disabled                                                                |
+| availability           | available                                                               |
+| bm_ip                  | 147.11.88.132                                                           |
+| bm_type                | dynamic                                                                 |
+| bm_username            | Administrator                                                           |
+| boot_device            | /dev/disk/by-path/pci-0000:c3:00.0-nvme-1                               |
+| capabilities           | {&apos;is_max_cpu_configurable&apos;: &apos;configurable&apos;, &apos;stor_function&apos;: &apos;monitor&apos;} |
+| clock_synchronization  | ntp                                                                     |
+| config_applied         | 61113e39-53fb-4fc3-b776-efc85a8483b3                                    |
+| config_status          | None                                                                    |
+| config_target          | 61113e39-53fb-4fc3-b776-efc85a8483b3                                    |
+| console                | ttyS0,115200n8                                                          |
+| created_at             | 2023-09-07T19:23:00.278864+00:00                                        |
+| device_image_update    | None                                                                    |
+| hostname               | controller-1                                                            |
+| hw_settle              | 0                                                                       |
+| id                     | 2                                                                       |
+| install_output         | text                                                                    |
+| install_state          | None                                                                    |
+| install_state_info     | None                                                                    |
+| inv_state              | inventoried                                                             |
+| invprovision           | provisioned                                                             |
+| location               | {}                                                                      |
+| max_cpu_mhz_allowed    | 3500                                                                    |
+| max_cpu_mhz_configured | None                                                                    |
+| mgmt_ip                | 7.0.3.4                                                                 |
+| mgmt_mac               | f0:b2:b9:04:3f:db                                                       |
+| operational            | enabled                                                                 |
+| personality            | controller                                                              |
+| reboot_needed          | False                                                                   |
+| reserved               | False                                                                   |
+| rootfs_device          | /dev/disk/by-path/pci-0000:c3:00.0-nvme-1                               |
+| serialid               | None                                                                    |
+| software_load          | 22.12                                                                   |
+| subfunction_avail      | available                                                               |
+| subfunction_oper       | enabled                                                                 |
+| subfunctions           | controller,worker,lowlatency                                            |
+| task                   | Swacting                                                                |
+| tboot                  |                                                                         |
+| ttys_dcd               | False                                                                   |
+| updated_at             | 2023-09-15T16:28:09.951125+00:00                                        |
+| uptime                 | 679390                                                                  |
+| uuid                   | cf21e3fd-00aa-4f8e-a362-d7e0f4605160                                    |
+| vim_progress_status    | services-enabled                                                        |
++------------------------+-------------------------------------------------------------------------+
+[2023-09-15 16:30:13,705] 1561 INFO  MainThread ssh.get_active_controller:: lab_dict = {&apos;short_name&apos;: &apos;cloud1&apos;, &apos;name&apos;: &apos;cloud1.com&apos;, &apos;floating ip&apos;: &apos;147.11.90.131&apos;, &apos;controller-0 ip&apos;: &apos;147.11.89.131&apos;, &apos;controller-1 ip&apos;: &apos;147.11.89.132&apos;}
+[2023-09-15 16:30:27,026] 277  INFO  MainThread ssh.wait_for_disconnect:: ssh session to 147.11.90.131 disconnected
+[2023-09-15 16:30:27,026] 1478 INFO  MainThread host_helper.wait_for_swact_complete:: ssh to 147.11.90.131 OAM floating IP disconnected, indicating swact initiated.
+[2023-09-15 16:30:57,053] 149  INFO  MainThread ssh.connect :: Attempt to connect to host - 147.11.90.131
+[2023-09-15 16:30:59,336] 181  INFO  MainThread ssh.connect :: Login successful!
+[2023-09-15 16:31:02,603] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+[2023-09-15 16:31:02,735] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+[2023-09-15 16:31:02,868] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+[2023-09-15 16:31:02,868] 1296 INFO  MainThread host_helper._wait_for_openstack_cli_enable:: Waiting for system cli and subfunctions to be ready and nova cli (if stx-openstack applied) to be enabled on active controller
+[2023-09-15 16:31:06,572] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
++------------------------+-------------------------------------------------+
+| Property               | Value                                           |
++------------------------+-------------------------------------------------+
+| contact                | ENT-Solutions-Engineering-Telecom@windriver.com |
+| created_at             | 2023-09-07T18:49:05.522057+00:00                |
+| description            | None                                            |
+| distributed_cloud_role | subcloud                                        |
+| https_enabled          | True                                            |
+| latitude               | 19.43276366419607                               |
+| location               | zocalo                                          |
+| longitude              | -99.13320490196557                              |
+| name                   | wind-river-se-88.131.132                        |
+| region_name            | akakor.88.131.132                               |
+| sdn_enabled            | False                                           |
+| security_feature       | spectre_meltdown_v1                             |
+| service_project_name   | services                                        |
+| shared_services        | []                                              |
+| software_version       | 22.12                                           |
+| system_mode            | duplex                                          |
+| system_type            | All-in-one                                      |
+| timezone               | UTC                                             |
+| updated_at             | 2023-09-07T19:12:03.866714+00:00                |
+| uuid                   | 16b3db28-21f7-4cc9-9d15-fe86ead94a8d            |
+| vswitch_type           | none                                            |
++------------------------+-------------------------------------------------+
+[2023-09-15 16:31:21,299] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
++--------------------------------------+-----------------------------+--------------+---------+
+| uuid                                 | service_group_name          | hostname     | state   |
++--------------------------------------+-----------------------------+--------------+---------+
+| cee74d25-056e-47a4-ad7d-e8b90fc8450a | cloud-services              | controller-0 | active  |
+| 753f346f-9f49-4e24-9381-19e3ca5f8de5 | cloud-services              | controller-1 | standby |
+| 63ff24c5-8779-4b0a-a0aa-8a8823ff0e13 | controller-services         | controller-0 | active  |
+| 78a6fd65-75b1-4124-9ac6-64d0a786684c | controller-services         | controller-1 | standby |
+| af75aca6-bbec-4ad4-bcf7-5d9a163c7f48 | directory-services          | controller-0 | active  |
+| 5a462456-31c5-49fe-862b-18febb2f5d58 | directory-services          | controller-1 | active  |
+| 100342dc-6d9e-4aa0-ac74-1fe50f99d3d3 | distributed-cloud-services  | controller-0 | active  |
+| 5bf239ee-b793-428b-9b7b-8caede05109d | distributed-cloud-services  | controller-1 | standby |
+| 124e3e27-eb82-4d02-86b1-4af3369ebb7d | oam-services                | controller-0 | active  |
+| d7145233-e9a5-48ca-93b0-5b9eed7459fc | oam-services                | controller-1 | standby |
+| 93b53b85-4d04-43ee-aa25-d3190a07b46a | patching-services           | controller-0 | active  |
+| fe08b1b2-ec71-4f79-a206-10732bffa6ab | patching-services           | controller-1 | standby |
+| 7df5be0e-195d-439a-bb2d-f0ea2ff8c952 | storage-monitoring-services | controller-0 | active  |
+| ab20e045-6f2c-4a3e-a98f-dd856f0b56de | storage-monitoring-services | controller-1 | standby |
+| c81653a3-c043-4672-9b8c-176a4be1c9fa | storage-services            | controller-0 | active  |
+| 6c03abe8-00fe-467e-9b30-2be2f633f0ff | storage-services            | controller-1 | active  |
+| 4211bf80-92bc-4c2d-8df3-a8c252bce75c | vim-services                | controller-0 | active  |
+| 2583e0de-e29f-4ae9-b622-a67e890789c2 | vim-services                | controller-1 | standby |
+| ffb8d89c-e6eb-4a4b-b089-1c60a9acb04b | web-services                | controller-0 | active  |
+| ab194e93-e761-4203-a99a-6c211559465b | web-services                | controller-1 | active  |
++--------------------------------------+-----------------------------+--------------+---------+
+[2023-09-15 16:31:21,431] 414  INFO  MainThread system_helper.get_active_standby_controllers:: system_helper.py line 414 table_ = {&apos;headers&apos;: [&apos;uuid&apos;, &apos;service_group_name&apos;, &apos;hostname&apos;, &apos;state&apos;], &apos;values&apos;: [[&apos;63ff24c5-8779-4b0a-a0aa-8a8823ff0e13&apos;, &apos;controller-services&apos;, &apos;controller-0&apos;, &apos;active&apos;], [&apos;78a6fd65-75b1-4124-9ac6-64d0a786684c&apos;, &apos;controller-services&apos;, &apos;controller-1&apos;, &apos;standby&apos;]]}
+[2023-09-15 16:31:21,431] 541  INFO  MainThread host_helper.wait_for_task_clear_and_subfunction_ready:: Waiting for task clear and subfunctions enable/available (if applicable) for hosts: [&apos;controller-0&apos;]
+[2023-09-15 16:31:25,354] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
++------------------------+-------------------------------------------------------------------------+
+| Property               | Value                                                                   |
++------------------------+-------------------------------------------------------------------------+
+| action                 | none                                                                    |
+| administrative         | unlocked                                                                |
+| apparmor               | disabled                                                                |
+| availability           | available                                                               |
+| bm_ip                  | 147.11.88.131                                                           |
+| bm_type                | dynamic                                                                 |
+| bm_username            | Administrator                                                           |
+| boot_device            | /dev/disk/by-path/pci-0000:c3:00.0-nvme-1                               |
+| capabilities           | {&apos;is_max_cpu_configurable&apos;: &apos;configurable&apos;, &apos;stor_function&apos;: &apos;monitor&apos;, |
+|                        | &apos;Personality&apos;: &apos;Controller-Active&apos;}                                     |
+| clock_synchronization  | ntp                                                                     |
+| config_applied         | 0760c253-7613-4ba9-961b-6023b61fc495                                    |
+| config_status          | None                                                                    |
+| config_target          | 0760c253-7613-4ba9-961b-6023b61fc495                                    |
+| console                | ttyS0,115200n8                                                          |
+| created_at             | 2023-09-07T18:51:01.664648+00:00                                        |
+| device_image_update    | None                                                                    |
+| hostname               | controller-0                                                            |
+| hw_settle              | 0                                                                       |
+| id                     | 1                                                                       |
+| install_output         | graphical                                                               |
+| install_state          | None                                                                    |
+| install_state_info     | None                                                                    |
+| inv_state              | inventoried                                                             |
+| invprovision           | provisioned                                                             |
+| location               | {}                                                                      |
+| max_cpu_mhz_allowed    | 3500                                                                    |
+| max_cpu_mhz_configured | None                                                                    |
+| mgmt_ip                | 7.0.3.3                                                                 |
+| mgmt_mac               | f0:b2:b9:05:fe:9b                                                       |
+| operational            | enabled                                                                 |
+| personality            | controller                                                              |
+| reboot_needed          | False                                                                   |
+| reserved               | False                                                                   |
+| rootfs_device          | /dev/disk/by-path/pci-0000:c3:00.0-nvme-1                               |
+| serialid               | None                                                                    |
+| software_load          | 22.12                                                                   |
+| subfunction_avail      | available                                                               |
+| subfunction_oper       | enabled                                                                 |
+| subfunctions           | controller,worker,lowlatency                                            |
+| task                   |                                                                         |
+| tboot                  |                                                                         |
+| ttys_dcd               | False                                                                   |
+| updated_at             | 2023-09-15T16:31:40.729107+00:00                                        |
+| uptime                 | 172964                                                                  |
+| uuid                   | 69caf1fd-3cfd-4dfd-8304-1423e42fce64                                    |
+| vim_progress_status    | services-enabled                                                        |
++------------------------+-------------------------------------------------------------------------+
+[2023-09-15 16:31:25,487] 557  INFO  MainThread host_helper.wait_for_task_clear_and_subfunction_ready:: Hosts task cleared and subfunctions (if applicable) are now in enabled/available states
+[2023-09-15 16:31:25,487] 1284 INFO  MainThread host_helper.check_sysinv_cli:: system cli and subfunction enabled
+[2023-09-15 16:31:29,957] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
++--------------------------------------+-----------------------------+--------------+---------+
+| uuid                                 | service_group_name          | hostname     | state   |
++--------------------------------------+-----------------------------+--------------+---------+
+| cee74d25-056e-47a4-ad7d-e8b90fc8450a | cloud-services              | controller-0 | active  |
+| 753f346f-9f49-4e24-9381-19e3ca5f8de5 | cloud-services              | controller-1 | standby |
+| 63ff24c5-8779-4b0a-a0aa-8a8823ff0e13 | controller-services         | controller-0 | active  |
+| 78a6fd65-75b1-4124-9ac6-64d0a786684c | controller-services         | controller-1 | standby |
+| af75aca6-bbec-4ad4-bcf7-5d9a163c7f48 | directory-services          | controller-0 | active  |
+| 5a462456-31c5-49fe-862b-18febb2f5d58 | directory-services          | controller-1 | active  |
+| 100342dc-6d9e-4aa0-ac74-1fe50f99d3d3 | distributed-cloud-services  | controller-0 | active  |
+| 5bf239ee-b793-428b-9b7b-8caede05109d | distributed-cloud-services  | controller-1 | standby |
+| 124e3e27-eb82-4d02-86b1-4af3369ebb7d | oam-services                | controller-0 | active  |
+| d7145233-e9a5-48ca-93b0-5b9eed7459fc | oam-services                | controller-1 | standby |
+| 93b53b85-4d04-43ee-aa25-d3190a07b46a | patching-services           | controller-0 | active  |
+| fe08b1b2-ec71-4f79-a206-10732bffa6ab | patching-services           | controller-1 | standby |
+| 7df5be0e-195d-439a-bb2d-f0ea2ff8c952 | storage-monitoring-services | controller-0 | active  |
+| ab20e045-6f2c-4a3e-a98f-dd856f0b56de | storage-monitoring-services | controller-1 | standby |
+| c81653a3-c043-4672-9b8c-176a4be1c9fa | storage-services            | controller-0 | active  |
+| 6c03abe8-00fe-467e-9b30-2be2f633f0ff | storage-services            | controller-1 | active  |
+| 4211bf80-92bc-4c2d-8df3-a8c252bce75c | vim-services                | controller-0 | active  |
+| 2583e0de-e29f-4ae9-b622-a67e890789c2 | vim-services                | controller-1 | standby |
+| ffb8d89c-e6eb-4a4b-b089-1c60a9acb04b | web-services                | controller-0 | active  |
+| ab194e93-e761-4203-a99a-6c211559465b | web-services                | controller-1 | active  |
++--------------------------------------+-----------------------------+--------------+---------+
+[2023-09-15 16:31:30,088] 414  INFO  MainThread system_helper.get_active_standby_controllers:: system_helper.py line 414 table_ = {&apos;headers&apos;: [&apos;uuid&apos;, &apos;service_group_name&apos;, &apos;hostname&apos;, &apos;state&apos;], &apos;values&apos;: [[&apos;63ff24c5-8779-4b0a-a0aa-8a8823ff0e13&apos;, &apos;controller-services&apos;, &apos;controller-0&apos;, &apos;active&apos;], [&apos;78a6fd65-75b1-4124-9ac6-64d0a786684c&apos;, &apos;controller-services&apos;, &apos;controller-1&apos;, &apos;standby&apos;]]}
+[2023-09-15 16:31:30,089] 1494 INFO  MainThread host_helper.wait_for_swact_complete:: Host before swacting: controller-1, host after swacting: controller-0
+[2023-09-15 16:31:30,089] 971  INFO  MainThread system_helper.wait_for_alarm_gone:: Waiting for alarm 400.001 to disappear from fm alarm-list
+[2023-09-15 16:31:34,012] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+
+[2023-09-15 16:31:34,143] 1005 INFO  MainThread system_helper.wait_for_alarm_gone:: Alarm 400.001 is not displayed in fm alarm-list
+[2023-09-15 16:31:34,143] 1561 INFO  MainThread ssh.get_active_controller:: lab_dict = {&apos;short_name&apos;: &apos;cloud1&apos;, &apos;name&apos;: &apos;cloud1.com&apos;, &apos;floating ip&apos;: &apos;147.11.90.131&apos;, &apos;controller-0 ip&apos;: &apos;147.11.89.131&apos;, &apos;controller-1 ip&apos;: &apos;147.11.89.132&apos;}
+[2023-09-15 16:31:38,586] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
++--------------------------------------+-----------------------------+--------------+---------+
+| uuid                                 | service_group_name          | hostname     | state   |
++--------------------------------------+-----------------------------+--------------+---------+
+| cee74d25-056e-47a4-ad7d-e8b90fc8450a | cloud-services              | controller-0 | active  |
+| 753f346f-9f49-4e24-9381-19e3ca5f8de5 | cloud-services              | controller-1 | standby |
+| 63ff24c5-8779-4b0a-a0aa-8a8823ff0e13 | controller-services         | controller-0 | active  |
+| 78a6fd65-75b1-4124-9ac6-64d0a786684c | controller-services         | controller-1 | standby |
+| af75aca6-bbec-4ad4-bcf7-5d9a163c7f48 | directory-services          | controller-0 | active  |
+| 5a462456-31c5-49fe-862b-18febb2f5d58 | directory-services          | controller-1 | active  |
+| 100342dc-6d9e-4aa0-ac74-1fe50f99d3d3 | distributed-cloud-services  | controller-0 | active  |
+| 5bf239ee-b793-428b-9b7b-8caede05109d | distributed-cloud-services  | controller-1 | standby |
+| 124e3e27-eb82-4d02-86b1-4af3369ebb7d | oam-services                | controller-0 | active  |
+| d7145233-e9a5-48ca-93b0-5b9eed7459fc | oam-services                | controller-1 | standby |
+| 93b53b85-4d04-43ee-aa25-d3190a07b46a | patching-services           | controller-0 | active  |
+| fe08b1b2-ec71-4f79-a206-10732bffa6ab | patching-services           | controller-1 | standby |
+| 7df5be0e-195d-439a-bb2d-f0ea2ff8c952 | storage-monitoring-services | controller-0 | active  |
+| ab20e045-6f2c-4a3e-a98f-dd856f0b56de | storage-monitoring-services | controller-1 | standby |
+| c81653a3-c043-4672-9b8c-176a4be1c9fa | storage-services            | controller-0 | active  |
+| 6c03abe8-00fe-467e-9b30-2be2f633f0ff | storage-services            | controller-1 | active  |
+| 4211bf80-92bc-4c2d-8df3-a8c252bce75c | vim-services                | controller-0 | active  |
+| 2583e0de-e29f-4ae9-b622-a67e890789c2 | vim-services                | controller-1 | standby |
+| ffb8d89c-e6eb-4a4b-b089-1c60a9acb04b | web-services                | controller-0 | active  |
+| ab194e93-e761-4203-a99a-6c211559465b | web-services                | controller-1 | active  |
++--------------------------------------+-----------------------------+--------------+---------+
+[2023-09-15 16:31:38,717] 414  INFO  MainThread system_helper.get_active_standby_controllers:: system_helper.py line 414 table_ = {&apos;headers&apos;: [&apos;uuid&apos;, &apos;service_group_name&apos;, &apos;hostname&apos;, &apos;state&apos;], &apos;values&apos;: [[&apos;63ff24c5-8779-4b0a-a0aa-8a8823ff0e13&apos;, &apos;controller-services&apos;, &apos;controller-0&apos;, &apos;active&apos;], [&apos;78a6fd65-75b1-4124-9ac6-64d0a786684c&apos;, &apos;controller-services&apos;, &apos;controller-1&apos;, &apos;standby&apos;]]}
+[2023-09-15 16:31:38,718] 1577 INFO  MainThread host_helper.wait_for_webservice_up:: Waiting for [&apos;controller-0&apos;] to be active for web-service in system servicegroup-list...
+[2023-09-15 16:31:38,718] 1561 INFO  MainThread ssh.get_active_controller:: lab_dict = {&apos;short_name&apos;: &apos;cloud1&apos;, &apos;name&apos;: &apos;cloud1.com&apos;, &apos;floating ip&apos;: &apos;147.11.90.131&apos;, &apos;controller-0 ip&apos;: &apos;147.11.89.131&apos;, &apos;controller-1 ip&apos;: &apos;147.11.89.132&apos;}
+[2023-09-15 16:31:42,978] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
++--------------------------------------+-----------------------------+--------------+---------+
+| uuid                                 | service_group_name          | hostname     | state   |
++--------------------------------------+-----------------------------+--------------+---------+
+| cee74d25-056e-47a4-ad7d-e8b90fc8450a | cloud-services              | controller-0 | active  |
+| 753f346f-9f49-4e24-9381-19e3ca5f8de5 | cloud-services              | controller-1 | standby |
+| 63ff24c5-8779-4b0a-a0aa-8a8823ff0e13 | controller-services         | controller-0 | active  |
+| 78a6fd65-75b1-4124-9ac6-64d0a786684c | controller-services         | controller-1 | standby |
+| af75aca6-bbec-4ad4-bcf7-5d9a163c7f48 | directory-services          | controller-0 | active  |
+| 5a462456-31c5-49fe-862b-18febb2f5d58 | directory-services          | controller-1 | active  |
+| 100342dc-6d9e-4aa0-ac74-1fe50f99d3d3 | distributed-cloud-services  | controller-0 | active  |
+| 5bf239ee-b793-428b-9b7b-8caede05109d | distributed-cloud-services  | controller-1 | standby |
+| 124e3e27-eb82-4d02-86b1-4af3369ebb7d | oam-services                | controller-0 | active  |
+| d7145233-e9a5-48ca-93b0-5b9eed7459fc | oam-services                | controller-1 | standby |
+| 93b53b85-4d04-43ee-aa25-d3190a07b46a | patching-services           | controller-0 | active  |
+| fe08b1b2-ec71-4f79-a206-10732bffa6ab | patching-services           | controller-1 | standby |
+| 7df5be0e-195d-439a-bb2d-f0ea2ff8c952 | storage-monitoring-services | controller-0 | active  |
+| ab20e045-6f2c-4a3e-a98f-dd856f0b56de | storage-monitoring-services | controller-1 | standby |
+| c81653a3-c043-4672-9b8c-176a4be1c9fa | storage-services            | controller-0 | active  |
+| 6c03abe8-00fe-467e-9b30-2be2f633f0ff | storage-services            | controller-1 | active  |
+| 4211bf80-92bc-4c2d-8df3-a8c252bce75c | vim-services                | controller-0 | active  |
+| 2583e0de-e29f-4ae9-b622-a67e890789c2 | vim-services                | controller-1 | standby |
+| ffb8d89c-e6eb-4a4b-b089-1c60a9acb04b | web-services                | controller-0 | active  |
+| ab194e93-e761-4203-a99a-6c211559465b | web-services                | controller-1 | active  |
++--------------------------------------+-----------------------------+--------------+---------+
+[2023-09-15 16:31:43,109] 1597 INFO  MainThread host_helper.wait_for_webservice_up:: Host(s) [&apos;controller-0&apos;] are active for web-service in system servicegroup-list
+[2023-09-15 16:31:43,109] 1561 INFO  MainThread ssh.get_active_controller:: lab_dict = {&apos;short_name&apos;: &apos;cloud1&apos;, &apos;name&apos;: &apos;cloud1.com&apos;, &apos;floating ip&apos;: &apos;147.11.90.131&apos;, &apos;controller-0 ip&apos;: &apos;147.11.89.131&apos;, &apos;controller-1 ip&apos;: &apos;147.11.89.132&apos;}
+[2023-09-15 16:31:45,846] 548  INFO  MainThread ssh._process_exec_result:: cmd_output equals 
+internal endpoint for compute service in akakor.88.131.132 region not found
+</system-err></testcase></testsuite>

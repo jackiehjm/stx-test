@@ -334,7 +334,7 @@ def set_user(user, name=None, project=None, password=None, project_doamin=None,
 def get_endpoints(field='ID', endpoint_id=None, service_name=None,
                   service_type=None, enabled=None, interface="admin",
                   region=None, url=None, strict=False,
-                  auth_info=Tenant.get('admin'), con_ssh=None, cli_filter=True):
+                  auth_info=Tenant.get('admin_platform'), con_ssh=None, cli_filter=True):
     """
     Get a list of endpoints with given arguments
     Args:
@@ -424,6 +424,7 @@ def is_https_enabled(con_ssh=None, source_openrc=True, interface='public',
         auth_info:
     Returns True or False
     """
+    LOG.info("is_https_enabled beginning")
     if not con_ssh:
         con_name = auth_info.get('region') if (
                 auth_info and ProjVar.get_var('IS_DC')) else None

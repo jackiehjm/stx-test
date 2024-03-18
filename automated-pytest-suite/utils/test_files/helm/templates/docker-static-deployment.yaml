@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "docker-static-site.name" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "docker-static-site.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "docker-static-site.name" . }}
+    spec:
+      containers:
+      - name: {{ include "docker-static-site.name" . }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        command: ['/bin/bash', '-c', '--']
+        args: ['while true; do sleep 10; done;']
+        env:
+        - name: AUTHOR
+          value: {{ .Values.authorText }}
+        ports:
+        - containerPort: 80
+      imagePullSecrets:
+        - name: "{{ .Values.image.secret }}"

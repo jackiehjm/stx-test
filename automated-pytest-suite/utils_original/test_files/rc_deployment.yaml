@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rc
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: regcred-local
+  namespace: rc
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: eyJhdXRocyI6eyJyZWdpc3RyeS5sb2NhbDo5MDAxIjp7InVzZXJuYW1lIjoiYWRtaW4iLCJwYXNzd29yZCI6IldSU2FkbTEyMyoiLCJhdXRoIjoiWVdSdGFXNDZWMUpUWVdSdE1USXpLZz09In19fQ==
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: resource-consumer
+  namespace: rc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: resource-consumer
+  template:
+    metadata:
+      labels:
+        app: resource-consumer
+    spec:
+      containers:
+      - name: resource-consumer
+        image: registry.central:9001/ps_emea/resource-consumer:1.9
+        ports:
+        - containerPort: 80
+        resources:
+         requests:
+          cpu: 100m
+          memory: 256Mi
+      imagePullSecrets:
+       - name: registry-creds
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rc-service
+  namespace: rc
+spec:
+  selector:
+    app: resource-consumer
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 9376
+  type: LoadBalancer

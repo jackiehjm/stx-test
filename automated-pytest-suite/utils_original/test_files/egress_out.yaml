@@ -1,0 +1,16 @@
+apiVersion: crd.projectcalico.org/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-egress-bmc
+spec:
+  egress:
+  - action: Deny
+    destination:
+      nets:
+      - 192.168.110.0/24
+  - action: Allow
+    destination:
+      nets:
+      - 0.0.0.0/0
+  types:
+  - Egress

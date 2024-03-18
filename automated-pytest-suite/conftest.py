@@ -274,7 +274,7 @@ def pytest_configure(config):
     if natbox_arg:
         natbox = setups.get_natbox_dict(natbox_arg)
 
-    lab, natbox = setups.setup_testcase_config(testcase_config, lab=lab,
+    lab, natbox,idrac  = setups.setup_testcase_config(testcase_config, lab=lab,
                                                natbox=natbox)
     tenant = tenant_arg.upper() if tenant_arg else 'TENANT1'
 
@@ -304,7 +304,7 @@ def pytest_configure(config):
     os.makedirs(log_dir, exist_ok=True)
 
     # set global constants, which will be used for the entire test session, etc
-    ProjVar.init_vars(lab=lab, natbox=natbox, logdir=log_dir, tenant=tenant,
+    ProjVar.init_vars(idrac=idrac,lab=lab, natbox=natbox, logdir=log_dir, tenant=tenant,
                       collect_all=collect_all,
                       always_collect=always_collect,
                       horizon_visible=horizon_visible)

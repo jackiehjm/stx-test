@@ -9,14 +9,14 @@ import re
 import configparser
 import time
 
+from consts.auth import Tenant, HostLinuxUser
 import yaml
-
+import ipaddress
 from utils import table_parser, exceptions
 from utils.tis_log import LOG
 from utils.clients.ssh import ControllerClient
-from keywords import common, system_helper
+from keywords import common, kube_helper,system_helper
 from consts.stx import PodStatus
-
 
 def exec_kube_cmd(sub_cmd, args=None, con_ssh=None, fail_ok=False, grep=None):
     """
@@ -509,7 +509,8 @@ def delete_resources(resource_names=None, select_all=None, resource_types='pod',
     if resource_names:
         if isinstance(resource_names, str):
             resource_names = [resource_names]
-        arg_str = '{} {}'.format(arg_str, ' '.join(resource_names))
+        namespace = namespace if namespace else "default"
+        arg_str = '{} {} -n {}'.format(arg_str, ' '.join(resource_names),namespace)
 
     if not con_ssh:
         con_ssh = ControllerClient.get_active_controller()
@@ -1134,3 +1135,242 @@ def get_openstack_configs(conf_file, configs=None, node=None, pods=None,
         config_values[pod] = settings
 
     return config_values
+
+def check_resource_creation(resource_names, resource_type="pvc", con_ssh=None, timeout=30, interval=10):
+    count = 0
+    max_count = timeout / interval
+    while True:
+        if count >= max_count:
+            break
+        _,out=exec_kube_cmd(sub_cmd=" get {}".format(resource_type), args=None, con_ssh=con_ssh, fail_ok=False, grep=resource_names)
+        #_,out = con_ssh.execute("kubectl get {} | grep {}".format(resource_type,resource_names), ignore_exception=True)
+        if resource_names in out :#and "Bound" in out:
+            return
+        count = count + 1
+        LOG.info("Waiting for {} seconds : iteration {}/{}".format(interval,count,max_count))
+        time.sleep(interval)
+    assert False, "Unable to create resource"
+
+
+def apply_and_check_pvc(request,file_path, resource_name, con_ssh=None, fail_ok=False,
+                           check_both_controllers=False,timeout=30,interval=10):
+    """
+    Apply a pod from given file via kubectl apply
+    Args:
+        file_path (str):
+        resource_name (str):
+        con_ssh:
+        fail_ok:
+        check_both_controllers (bool):
+
+    Returns (tuple):
+        (0, <res_info>(dict))
+        (1, <res_err>)
+        (2, <res_info>)    # res is not running after apply
+        (3, <res_info>)    # res if not running on the other controller after
+        apply
+
+    """
+
+    home_dir = HostLinuxUser.get_home()
+
+    file=file_path.split("/")[-1]
+    common.scp_from_localhost_to_active_controller(file_path, dest_path=home_dir)
+    request.addfinalizer(lambda: con_ssh.exec_cmd(cmd="rm -rf {}/{}".format(home_dir,file)))
+    request.addfinalizer(lambda: kube_helper.delete_resources(resource_names=resource_name,resource_types="pvc" ,con_ssh=con_ssh,check_both_controllers=False))
+    arg_str = ' -f {}/{}'.format(home_dir,file)
+    if not con_ssh:
+        con_ssh = ControllerClient.get_active_controller()
+    code, output = exec_kube_cmd(sub_cmd='apply', args=arg_str, con_ssh=con_ssh,
+                                 fail_ok=fail_ok)
+
+    count = 0
+    max_count = timeout / interval
+    while True:
+        if count >= max_count:
+            break
+        _,out=exec_kube_cmd(sub_cmd=" get pvc", args=None, con_ssh=con_ssh, fail_ok=False, grep=resource_name)
+        if resource_name in out and "Bound" in out:
+            return
+        count = count + 1
+        LOG.info("Waiting for {} seconds : iteration {}/{}".format(interval,count,max_count))
+        time.sleep(interval)
+    assert False, "Unable to create resource"
+
+    LOG.info( "{}: {} is successfully applied and running".format(resource_type,resource_name))
+
+
+
+def apply_and_check_pv(request,file_path, resource_name, con_ssh=None, fail_ok=False,
+                           check_both_controllers=False,timeout=30,interval=10):
+    """
+    Apply a pod from given file via kubectl apply
+    Args:
+        file_path (str):
+        resource_name (str):
+        con_ssh:
+        fail_ok:
+        check_both_controllers (bool):
+
+    Returns (tuple):
+        (0, <res_info>(dict))
+        (1, <res_err>)
+        (2, <res_info>)    # res is not running after apply
+        (3, <res_info>)    # res if not running on the other controller after
+        apply
+
+    """
+
+    home_dir = HostLinuxUser.get_home()
+
+    file=file_path.split("/")[-1]
+    common.scp_from_localhost_to_active_controller(file_path, dest_path=home_dir)
+    request.addfinalizer(lambda: con_ssh.exec_cmd(cmd="rm -rf {}/{}".format(home_dir,file)))
+    request.addfinalizer(lambda: delete_resources(resource_names=resource_name, resource_types="pv",con_ssh=con_ssh,check_both_controllers=False))
+    arg_str = ' -f {}/{}'.format(home_dir,file)
+    if not con_ssh:
+        con_ssh = ControllerClient.get_active_controller()
+    code, output = exec_kube_cmd(sub_cmd='apply', args=arg_str, con_ssh=con_ssh,
+                                 fail_ok=fail_ok)
+    count = 0
+    max_count = timeout / interval
+    while True:
+        if count >= max_count:
+            break
+        _,out=exec_kube_cmd(sub_cmd=" get pv", args=None, con_ssh=con_ssh, fail_ok=False, grep=resource_name)
+        if resource_name in out and "Available" in out:
+            return
+        count = count + 1
+        LOG.info("Waiting for {} seconds : iteration {}/{}".format(interval,count,max_count))
+        time.sleep(interval)
+    assert False, "Unable to create resource"
+
+    LOG.info( "{}: {} is successfully applied and running".format(resource_type,resource_name))
+
+
+def create_file_in_a_pod(request, file, pod_name, contents, create=True, con_ssh=None):
+    fail_ok = False
+    if not con_ssh:
+        con_ssh = ControllerClient.get_active_controller()
+    try:
+        if create:
+            code, output = exec_kube_cmd(sub_cmd='exec', args="{} -- touch {}".format(pod_name, file), con_ssh=con_ssh                                         ,fail_ok=fail_ok)
+            code, output = exec_kube_cmd(sub_cmd='exec', args="-it {} -- bash -c \"echo \"{}\" > {}\"".format(pod_name, contents,                              file), con_ssh=con_ssh, fail_ok=fail_ok)
+        time.sleep(20)
+        code, output = exec_kube_cmd(sub_cmd='exec', args="{} -- bash -c \"cat {}\"".format(pod_name, file), con_ssh=con_ssh, fail_ok=fail_ok)
+        return output
+    except Exception as e:
+        return None
+
+def get_deployed_pod_ip(request, pod_name, namespace='default', con_ssh=None):
+    fail_ok = False
+    code, output = exec_kube_cmd(sub_cmd='get', args="pod {} --template \"{{{{.status.podIP}}}}\" -n {}; echo".format(pod_name, namespace), con_ssh=con_ssh, fail_ok=fail_ok)
+    return output
+
+def create_and_verify_network_policy(request, file_path, globalnetworkpolicy_name, con_ssh=None, fail_ok=False):
+    file = file_path.split("/")[-1]
+    home_dir = HostLinuxUser.get_home()
+    request.addfinalizer(lambda: con_ssh.exec_cmd(cmd="rm -rf {}/{}".format(home_dir,file)))
+    request.addfinalizer(lambda: exec_kube_cmd(sub_cmd='delete', args="-f {}/{}".format(home_dir,file), con_ssh=con_ssh, fail_ok=fail_ok))
+    common.scp_from_localhost_to_active_controller(file_path, dest_path=home_dir)
+    code, output = exec_kube_cmd(sub_cmd='create', args="-f {}/{}".format(HostLinuxUser.get_home(),file), con_ssh=con_ssh, fail_ok=fail_ok)
+    time.sleep(5)
+    code, output = exec_kube_cmd(sub_cmd='get', args="-f {}/{}".format(HostLinuxUser.get_home(),file), con_ssh=con_ssh, fail_ok=fail_ok)
+    if globalnetworkpolicy_name in output:
+        return True
+    return False
+
+def get_idrac_ip_network_range(con_ssh=None):
+    con_ssh.exec_sudo_cmd("sudo ipmitool lan print")
+    idrac_ip, subnet_mask =  system_helper.get_idrac_ip_and_subnet(con_ssh=con_ssh)
+    network = ipaddress.IPv4Network('{}/{}'.format(idrac_ip, subnet_mask), strict=False)
+    return "{}/{}".format(network.network_address, network.prefixlen)
+
+
+def create_and_verify_pod(request,con_ssh, file_path, pod_name, timeout=100, interval=10):
+    count = 0
+    max_count = timeout / interval
+    def cleanup_pod():
+        count = 0
+        pod_deleted = False
+        file = file_path.split("/")[-1]
+        con_ssh.exec_cmd("rm -rf {}/{}".format(home_dir,file))
+        con_ssh.exec_cmd(cmd="kubectl delete pod {}".format(pod_name))
+        while True:
+            if count >= max_count:
+                break
+            _,out =con_ssh.exec_cmd(cmd="kubectl get pods |grep {}".format(pod_name),  get_exit_code=False)
+            if pod_name not in out:
+                pod_deleted = True
+                break
+            count = count + 1
+            time.sleep(interval)
+        assert pod_deleted, "pod has not deleted in time."
+
+    home_dir = HostLinuxUser.get_home()
+
+    request.addfinalizer(cleanup_pod)
+    file = file_path.split("/")[-1]
+    common.scp_from_localhost_to_active_controller(file_path,dest_path=home_dir)
+    exec_kube_cmd("create -f {}/{}".format(home_dir,file),con_ssh=con_ssh)
+    while True:
+        if count >= max_count:
+            break
+        _,out = exec_kube_cmd(sub_cmd="get pods", con_ssh=con_ssh, grep=pod_name)
+        if "Running" in out:
+            return True
+        count = count + 1
+        time.sleep(interval)
+    return False
+
+def check_deployed_pods(deployment_name,replicas):
+    wait_for_pods_status(partial_names=deployment_name)
+    _, kubertn = kube_helper.exec_kube_cmd(sub_cmd="get pods")
+    pods = common.convert_sshout_to_table(kubertn)
+    LOG.info(pods)
+    c = 0
+    for x in pods:
+        if deployment_name in x[pods[0].index('NAME')]:
+            c += 1
+            assert x[pods[0].index("STATUS")] == "Running", "Pod {} is in {} state".format(x[pods[0].index('NAME')],x[pods[0].index( "STATUS")])
+    assert c == replicas
+
+
+def scale_deployment(deployment_name,replicas=1):
+    _, ret = kube_helper.exec_kube_cmd(
+        sub_cmd="scale --replicas {} deployments/{}".format(replicas, deployment_name))
+    LOG.info(ret)
+    assert "{} scaled".format(deployment_name) in ret
+    check_deployed_pods(deployment_name,replicas)
+
+
+def create_and_verify_network_attachment(request, file_path, network_attachment_def_name, con_ssh=None, fail_ok=False, timeout=100, interval=10):
+    file = file_path.split("/")[-1]
+    home_dir = HostLinuxUser.get_home()
+    max_count = timeout / interval
+    def cleanup_nad():
+        count = 0
+        nad_deleted = False
+        file = file_path.split("/")[-1]
+        con_ssh.exec_cmd("rm -rf {}/{}".format(home_dir, file))
+        con_ssh.exec_cmd(cmd="kubectl delete  network-attachment-definition {}".format(network_attachment_def_name))
+        while True:
+            if count >= max_count:
+                break
+            _, out = con_ssh.exec_cmd(cmd="kubectl get network-attachment-definition |grep {}".format(network_attachment_def_name), get_exit_code=False)
+            if network_attachment_def_name not in out:
+                nad_deleted = True
+                break
+            count = count + 1
+            time.sleep(interval)
+        assert nad_deleted, "network-attachment-definition has not deleted in time."
+
+    request.addfinalizer(cleanup_nad)
+
+    common.scp_from_localhost_to_active_controller(file_path, dest_path=home_dir)
+    code, output = exec_kube_cmd(sub_cmd='create', args="-f {}/{}".format(HostLinuxUser.get_home(),file), con_ssh=con_ssh, fail_ok=fail_ok)
+    time.sleep(5)
+    code, output = exec_kube_cmd(sub_cmd='get', args="-f {}/{}".format(HostLinuxUser.get_home(),file), con_ssh=con_ssh, fail_ok=fail_ok)
+    if network_attachment_def_name in output:
+        return True
+    return False

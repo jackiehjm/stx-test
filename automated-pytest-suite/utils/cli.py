@@ -53,9 +53,6 @@ def exec_cli(cmd, sub_cmd, positional_args='', client=None, flags='',
 
     platform = True if auth_info.get('platform') else False
 
-    if not platform and ProjVar.get_var('OPENSTACK_DEPLOYED') is False:
-        skip('stx-openstack application is not applied.')
-
     region = auth_info.get('region')
     dc_region = region if region and is_dc else None
     default_region_and_url = Tenant.get_region_and_url(platform=platform,
@@ -126,7 +123,7 @@ def exec_cli(cmd, sub_cmd, positional_args='', client=None, flags='',
         else:
             flags += ' --os-region-name {}'.format(region)
 
-    complete_cmd = ' '.join([os.path.join(cli_dir, cmd), flags.strip(), sub_cmd,
+    complete_cmd = ' '.join([os.path.join(cli_dir, cmd), sub_cmd,
                              positional_args]).strip()
 
     # workaround for dcmanager cmd not supporting --os-project-name

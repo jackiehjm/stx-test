@@ -1,3 +1,4 @@
+import json
 #
 # Copyright (c) 2019 Wind River Systems, Inc.
 #
@@ -12,16 +13,9 @@ class Labs(object):
     # Each lab should be a dictionary such as following. The short_name and name are free style
     # strings while the floating IP and controller-0/1 IPs should map to what is shown in system
     # oam-show
-
-    # STX_SYS1 = {
-    #     'short_name': 'my_server1',
-    #     'name': 'my_server1.com',
-    #     'floating ip': '10.10.10.2',
-    #     'controller-0 ip': '10.10.10.3',
-    #     'controller-1 ip': '10.10.10.4',
-    # }
-    pass
-
+   def __init__(self):
+       with open('/root/test-config/lab.json','r') as f:
+         self.env = json.load(f)    
 
 def update_lab(lab_dict_name=None, lab_name=None, floating_ip=None, **kwargs):
     """
@@ -165,3 +159,16 @@ class NatBoxes(object):
             nat_dict['prompt'] = prompt
         setattr(NatBoxes, 'NAT_NEW', nat_dict)
         return nat_dict
+
+class Idrac(object):
+
+    @staticmethod
+    def add_idrac(user=None, password=None,):
+        user = user if user else 'root'
+        password = password if password else ')OKM0okm'
+
+        idrac_dict = {
+                    'user': user,
+                    'password': password
+                    }
+        return idrac_dict

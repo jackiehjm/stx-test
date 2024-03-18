@@ -94,7 +94,7 @@ def get_hugepage_pod_file():
         resource_names="hugepages-pod")
 
 
-def test_hugepage_pod(get_hugepage_pod_file):
+def test_hugepage_pod(get_hugepage_pod_file, record_property):
     """
     Verify hugepage pod is deployed and running
     Args:
@@ -107,6 +107,9 @@ def test_hugepage_pod(get_hugepage_pod_file):
     Teardown:
         - Deletes the hugepages pod from the host
     """
+    record_property("test_case_id", "100")
+    record_property("test_case_description", "Verify hugepage pod is deployed and running")
+    record_property("kubernetes", True)
     LOG.tc_step("Create hugepage pod with deployment file")
     kube_helper.exec_kube_cmd(
         sub_cmd="create -f {}".format(get_hugepage_pod_file))

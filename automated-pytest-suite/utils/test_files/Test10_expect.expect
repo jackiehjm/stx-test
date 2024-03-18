@@ -1,0 +1,21 @@
+#!/usr/bin/expect
+set timeout -1
+spawn kubectl exec -it dpdk-pktgen -- /bin/bash
+send "/opt/bin/pktgen -l pktgen_affinity n 3 -w pktgen_PCI --proc-type auto --socket-mem 256 --file-prefix pg -- -p 0x01 -P -m \"2ndCPUpktgen\" --crc-strip\r"
+expect "Pktgen:/>"
+send "seq 0 0 9e:fd:e6:dd:55:55 9e:fd:e6:dd:44:44 2.1.1.2/16 1.1.1.2/16 2048 2048 ipv4 udp 0 1024\r"
+expect "Pktgen:/>"
+send "set all seq_cnt 1\r"
+expect "Pktgen:/>"
+send "start all\r"
+expect "Pktgen:/>"
+send "page latency\r"
+sleep 300
+expect "Pktgen:/>"
+send "stop all\r"
+sleep 2
+expect "Pktgen:/>"
+send "quit\r"
+expect "[root@dpdk-pktgen /]#"
+send "exit\r"
+interact

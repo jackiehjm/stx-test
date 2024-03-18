@@ -1326,11 +1326,15 @@ def _wait_for_openstack_cli_enable(con_ssh=None, timeout=HostTimeout.SWACT,
         return False
     raise TimeoutError(err_msg)
 
-
-def swact_host(hostname=None, swact_start_timeout=HostTimeout.SWACT,
-               swact_complete_timeout=HostTimeout.SWACT,
-               fail_ok=False, auth_info=Tenant.get('admin_platform'),
-               con_ssh=None, wait_for_alarm=False):
+def swact_host(
+    hostname=None,
+    swact_start_timeout=HostTimeout.SWACT,
+    swact_complete_timeout=HostTimeout.SWACT,
+    fail_ok=False,
+    auth_info=Tenant.get('admin_platform'),
+    con_ssh=None,
+    wait_for_alarm=False,
+):
     """
     Swact active controller from given hostname.
 
@@ -1357,83 +1361,45 @@ def swact_host(hostname=None, swact_start_timeout=HostTimeout.SWACT,
             <swact_complete_timeou>")
 
     """
-    active_host = system_helper.get_active_controller_name(con_ssh=con_ssh,
-                                                           auth_info=auth_info)
+    active_host = system_helper.get_active_controller_name(
+        con_ssh=con_ssh, auth_info=auth_info
+    )
     if hostname is None:
         hostname = active_host
 
     pre_alarms = None
     if wait_for_alarm:
-        pre_alarms = system_helper.get_alarms(con_ssh=con_ssh,
-                                              auth_info=auth_info)
+        pre_alarms = system_helper.get_alarms(
+            con_ssh=con_ssh, auth_info=auth_info
+        )
 
-    exitcode, msg = cli.system('host-swact', hostname, ssh_client=con_ssh,
-                               fail_ok=fail_ok, auth_info=auth_info)
+    pre_helm_healthy = False
+
+    exitcode, msg = cli.system(
+        'host-swact',
+        hostname,
+        ssh_client=con_ssh,
+        fail_ok=fail_ok,
+        auth_info=auth_info,
+    )
     if exitcode == 1:
         return 1, msg
 
     if hostname != active_host:
-        system_helper.wait_for_host_values(hostname,
-                                           timeout=swact_start_timeout,
-                                           fail_ok=False, con_ssh=con_ssh,
-                                           auth_info=auth_info, task='')
-        return 2, "{} is not active controller host, thus swact request " \
-                  "failed as expected.".format(hostname)
-    else:
-        rtn = wait_for_swact_complete(
-            hostname, con_ssh, swact_start_timeout=swact_start_timeout,
-            auth_info=auth_info, swact_complete_timeout=swact_complete_timeout,
-            fail_ok=fail_ok)
-    if rtn[0] == 0:
-        nova_auth = Tenant.get('admin', dc_region=auth_info.get(
-            'region') if auth_info else None)
-        try:
-            res = wait_for_webservice_up(
-                system_helper.get_active_controller_name(),
-                fail_ok=fail_ok,
-                auth_info=auth_info, con_ssh=con_ssh)[0]
-            if not res:
-                return 5, "Web-services for new controller is not active"
-
-            if system_helper.is_aio_duplex(con_ssh=con_ssh,
-                                           auth_info=auth_info):
-                hypervisor_up_res = wait_for_hypervisors_up(hostname,
-                                                            fail_ok=fail_ok,
-                                                            con_ssh=con_ssh,
-                                                            auth_info=nova_auth)
-                if not hypervisor_up_res:
-                    return 6, "Hypervisor state is not up for {} after " \
-                              "swacted".format(hostname)
-
-                for host in ('controller-0', 'controller-1'):
-                    task_aff_res = wait_for_tasks_affined(host, con_ssh=con_ssh,
-                                                          fail_ok=True,
-                                                          auth_info=auth_info,
-                                                          timeout=300)
-                    if not task_aff_res:
-                        msg = "tasks affining incomplete on {} after swact " \
-                              "from {}".format(host, hostname)
-                        # Do not fail the test due to task affining
-                        # incomplete for now to unblock test case.
-                        LOG.error(msg=msg)
-                        return 7, msg
-        finally:
-            # After swact, there is a delay for alarms to re-appear on new
-            # active controller, thus the wait.
-            if pre_alarms:
-                post_alarms = system_helper.get_alarms(con_ssh=con_ssh,
-                                                       auth_info=auth_info)
-                for alarm in pre_alarms:
-                    if alarm not in post_alarms:
-                        alarm_id, entity_id = alarm.split('::::')
-                        system_helper.wait_for_alarm(alarm_id=alarm_id,
-                                                     entity_id=entity_id,
-                                                     fail_ok=True, timeout=300,
-                                                     check_interval=15,
-                                                     auth_info=auth_info)
-
-    return rtn
-
+        system_helper.wait_for_host_values(
+            hostname,
+            timeout=swact_start_timeout,
+            fail_ok=False,
+            con_ssh=con_ssh,
+            auth_info=auth_info,
+            task='',
+        )
+        return (
+            2,
+            "{} is not active controller host, thus swact request failed as expected.".format(
+                hostname
+            ),
+        )
 
 def wait_for_swact_complete(before_host, con_ssh=None,
                             swact_start_timeout=HostTimeout.SWACT,

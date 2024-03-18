@@ -13,7 +13,7 @@ import configparser
 
 from consts.auth import Tenant, HostLinuxUser, CliAuth, Guest
 from consts.stx import Prompt, SUBCLOUD_PATTERN, SysType, GuestImages, Networks
-from consts.lab import Labs, add_lab_entry, NatBoxes
+from consts.lab import Labs, add_lab_entry, NatBoxes, Idrac
 from consts.proj_vars import ProjVar
 from keywords import host_helper, nova_helper, system_helper, keystone_helper, \
     common, container_helper, dc_helper
@@ -84,6 +84,8 @@ def setup_natbox_ssh(natbox, con_ssh):
 
     return nat_ssh
 
+def get_idrac_cred(user=None, password=None):
+    return Idrac.add_idrac(user=user, password=password)
 
 def setup_keypair(con_ssh, natbox_client=None):
     """
@@ -256,23 +258,16 @@ def _get_nonroot_group(con_ssh, user=None):
 
 
 def get_lab_dict(labname):
-    labname = labname.strip().lower().replace('-', '_')
-    labs = get_labs_list()
+    #labname = labname.strip().lower().replace('-', '_')
+    lab_info = get_labs_list(labname)
+    return lab_info
 
-    for lab in labs:
-        if labname in lab.get('name').replace('-', '_').lower().strip() \
-            or labname == lab.get('short_name').replace('-', '_').\
-                lower().strip() or labname == lab.get('floating ip'):
-            return lab
-    else:
-        return add_lab_entry(labname)
+def get_labs_list(labname):
+    environment = Labs().env
+    for key,value in environment.items():
+        if labname == key:
+            return value
 
-
-def get_labs_list():
-    labs = [getattr(Labs, item) for item in dir(Labs) if
-            not item.startswith('__')]
-    labs = [lab_ for lab_ in labs if isinstance(lab_, dict)]
-    return labs
 
 
 def get_natbox_dict(natboxname, user=None, password=None, prompt=None):
@@ -628,7 +623,7 @@ def setup_testcase_config(testcase_config, lab=None, natbox=None):
     guest_networks_section = 'guest_networks'
     guest_keypair_section = 'guest_keypair'
     natbox_section = 'natbox'
-
+    idrac_section = 'idrac'
     config = configparser.ConfigParser()
     config.read(testcase_config)
 
@@ -720,6 +715,13 @@ def setup_testcase_config(testcase_config, lab=None, natbox=None):
     #
     # Update global variables for guest_image section
     #
+    idrac_user = config.get(idrac_section, 'idrac_user',
+                                 fallback='').strip()
+    idrac_password = config.get(idrac_section, 'idrac_password',
+                                 fallback='').strip()
+
+    idrac = get_idrac_cred(user=idrac_user,password=idrac_password)
+
     img_file_dir = config.get(guest_image_section, 'img_file_dir',
                               fallback='').strip()
     glance_image_name = config.get(guest_image_section, 'glance_image_name',
@@ -806,4 +808,4 @@ def setup_testcase_config(testcase_config, lab=None, natbox=None):
             Networks.set_neutron_net_patterns(net_type=net_type,
                                               net_name_pattern=net_name_pattern)
 
-    return lab, natbox
+    return lab, natbox,idrac

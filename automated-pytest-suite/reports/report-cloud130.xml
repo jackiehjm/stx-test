@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?><testsuite errors="1" failures="0" name="pytest" skips="0" tests="1" time="4.837"><testcase classname="pytest" name="internal" time="0"><error message="internal error">Traceback (most recent call last):
+  File &quot;/usr/local/lib/python3.6/site-packages/_pytest/main.py&quot;, line 178, in wrap_session
+    session.exitstatus = doit(config, session) or 0
+  File &quot;/usr/local/lib/python3.6/site-packages/_pytest/main.py&quot;, line 214, in _main
+    config.hook.pytest_collection(session=session)
+  File &quot;/usr/local/lib/python3.6/site-packages/pluggy/__init__.py&quot;, line 617, in __call__
+    return self._hookexec(self, self._nonwrappers + self._wrappers, kwargs)
+  File &quot;/usr/local/lib/python3.6/site-packages/pluggy/__init__.py&quot;, line 222, in _hookexec
+    return self._inner_hookexec(hook, methods, kwargs)
+  File &quot;/usr/local/lib/python3.6/site-packages/pluggy/__init__.py&quot;, line 216, in &lt;lambda&gt;
+    firstresult=hook.spec_opts.get(&apos;firstresult&apos;),
+  File &quot;/usr/local/lib/python3.6/site-packages/pluggy/callers.py&quot;, line 201, in _multicall
+    return outcome.get_result()
+  File &quot;/usr/local/lib/python3.6/site-packages/pluggy/callers.py&quot;, line 76, in get_result
+    raise ex[1].with_traceback(ex[2])
+  File &quot;/usr/local/lib/python3.6/site-packages/pluggy/callers.py&quot;, line 180, in _multicall
+    res = hook_impl.function(*args)
+  File &quot;/usr/local/lib/python3.6/site-packages/_pytest/main.py&quot;, line 224, in pytest_collection
+    return session.perform_collect()
+  File &quot;/usr/local/lib/python3.6/site-packages/_pytest/main.py&quot;, line 426, in perform_collect
+    items = self._perform_collect(args, genitems)
+  File &quot;/usr/local/lib/python3.6/site-packages/_pytest/main.py&quot;, line 464, in _perform_collect
+    self.items.extend(self.genitems(node))
+  File &quot;/usr/local/lib/python3.6/site-packages/_pytest/main.py&quot;, line 606, in genitems
+    rep = collect_one_node(node)
+  File &quot;/usr/local/lib/python3.6/site-packages/_pytest/runner.py&quot;, line 556, in collect_one_node
+    ihook.pytest_collectstart(collector=collector)
+  File &quot;/usr/local/lib/python3.6/site-packages/pluggy/__init__.py&quot;, line 617, in __call__
+    return self._hookexec(self, self._nonwrappers + self._wrappers, kwargs)
+  File &quot;/usr/local/lib/python3.6/site-packages/pluggy/__init__.py&quot;, line 222, in _hookexec
+    return self._inner_hookexec(hook, methods, kwargs)
+  File &quot;/usr/local/lib/python3.6/site-packages/pluggy/__init__.py&quot;, line 216, in &lt;lambda&gt;
+    firstresult=hook.spec_opts.get(&apos;firstresult&apos;),
+  File &quot;/usr/local/lib/python3.6/site-packages/pluggy/callers.py&quot;, line 201, in _multicall
+    return outcome.get_result()
+  File &quot;/usr/local/lib/python3.6/site-packages/pluggy/callers.py&quot;, line 76, in get_result
+    raise ex[1].with_traceback(ex[2])
+  File &quot;/usr/local/lib/python3.6/site-packages/pluggy/callers.py&quot;, line 180, in _multicall
+    res = hook_impl.function(*args)
+  File &quot;/usr/wrcptestsuite/automated-pytest-suite/hw_validation_testcases/conftest.py&quot;, line 53, in pytest_collectstart
+    CliAuth.set_vars(**setups.get_auth_via_openrc(con_ssh))
+  File &quot;/usr/wrcptestsuite/automated-pytest-suite/setups.py&quot;, line 415, in get_auth_via_openrc
+    if line.split(&apos;export &apos;)[1].split(sep=&apos;=&apos;)[0] in valid_keys:
+IndexError: list index out of range</error></testcase></testsuite>
