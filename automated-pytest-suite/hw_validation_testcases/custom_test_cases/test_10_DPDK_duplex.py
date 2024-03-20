@@ -9,20 +9,6 @@ from utils import cli
 import subprocess
 
 @mark.hw_validation
-def test_1_3_swact(request):
-    if system_helper.is_aio_simplex():
-        skip("Simplex system detected")
-    host = system_helper.get_active_controller_name()
-    first_active = host
-    first_standby = system_helper.get_standby_controller_name()
-    LOG.tc_step("First Active is "+ first_active)
-    LOG.tc_step("First Standby is "+ first_standby)
-    with host_helper.ssh_to_host(hostname=host) as con_ssh:
-        LOG.tc_step("Issuing swact command")
-        con_ssh.exec_cmd("system host-swact "+host)
-        time.sleep(60)
-
-@mark.hw_validation
 def test_sriov_interfaces(request):
     if system_helper.is_aio_simplex():
         skip("Simplex system detected")

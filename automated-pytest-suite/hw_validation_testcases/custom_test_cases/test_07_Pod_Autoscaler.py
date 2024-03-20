@@ -7,7 +7,7 @@ from consts.auth import  HostLinuxUser, Tenant
 
 
 @mark.hw_validation
-def test_maximum_number_of_pods_on_node(request):
+def test_pod_autoscaler(request):
     LOG.tc_step("Retrieving active controller")
     active_ctrl=system_helper.get_active_controller_name()
 

@@ -20,7 +20,7 @@ def test_maximum_number_of_pods_on_node(request):
 
         con_ssh.exec_cmd("for i in {1..110};do kubectl create -f Test6_simple.yaml -n test-$i;done")
         LOG.info("Waiting for Pods to Create")
-        time.sleep(60)
+        time.sleep(180)
 
         pod_number = con_ssh.exec_cmd("kubectl get pods --all-namespaces -o wide|grep -v Completed|grep -v Pending|grep -v OutOfpods|grep -v NAME|grep -v 'controller-1'|wc -l")
         con_ssh.exec_cmd("for i in {1..110};do kubectl delete pods simple -n test-$i & done")

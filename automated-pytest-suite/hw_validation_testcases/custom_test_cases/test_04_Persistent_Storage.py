@@ -24,6 +24,7 @@ def test_04_PV_creation(request):
         LOG.info("Starting Test")
         con_ssh.exec_cmd("kubectl apply -f Test4_pv-volume.yaml")
         con_ssh.exec_cmd("kubectl apply -f Test4_pv-claim.yaml")
+        con_ssh.exec_cmd("echo '  nodeName: %s' >> Test4_pv-pod.yaml" % host)
         con_ssh.exec_cmd("kubectl apply -f Test4_pv-pod.yaml")
         time.sleep(60)
         con_ssh.exec_cmd("kubectl get pv task-pv-volume")

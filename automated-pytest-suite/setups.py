@@ -411,7 +411,7 @@ def get_auth_via_openrc(con_ssh, use_telnet=False, con_telnet=None):
     lines = output.splitlines()
     auth_dict = {}
     for line in lines:
-        if 'export' in line:
+        if 'export ' in line:
             if line.split('export ')[1].split(sep='=')[0] in valid_keys:
                 key, value = line.split(sep='export ')[1].split(sep='=')
                 auth_dict[key.strip().upper()] = value.strip()

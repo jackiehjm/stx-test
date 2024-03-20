@@ -8,7 +8,7 @@ def check_output(output):
 
 # Start the first process with sudo
 sudo_password = 'Li69nux*'
-command1 = 'docker container run -it alexeiled/stress-ng --vm 2 --vm-bytes 2000M --vm-keep -m 1 --metrics-brief --timeout 1h'
+command1 = 'docker container run -it alexeiled/stress-ng --vm 4 --vm-bytes 8000M --vm-keep -m 1 --metrics-brief --timeout 1h'
 
 child1 = pexpect.spawn(f'sudo -S {command1}')
 child1.expect('Password:')

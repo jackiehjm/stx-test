@@ -9,9 +9,10 @@ import time
 def test_1_5_Power_Off_Host(request):
     if system_helper.is_aio_simplex():
         skip("Simplex system detected")
-    host = system_helper.get_active_controller_name()
+
+    active = system_helper.get_active_controller_name()
     
-    with host_helper.ssh_to_host(hostname=host) as con_ssh:
+    with host_helper.ssh_to_host(hostname=active) as con_ssh:
         LOG.tc_step("Querying Node Sensor Status")
         standby = system_helper.get_standby_controller_name() 
         con_ssh.exec_cmd("system host-lock " + standby) 
