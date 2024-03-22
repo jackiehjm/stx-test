@@ -624,8 +624,16 @@ def setup_testcase_config(testcase_config, lab=None, natbox=None):
     guest_keypair_section = 'guest_keypair'
     natbox_section = 'natbox'
     idrac_section = 'idrac'
+
+    # HW validation section
+    hwv_section = 'hwv'
+
     config = configparser.ConfigParser()
     config.read(testcase_config)
+
+    hwv = {}
+    hwv['ptp_nic_c0'] = config.get(hwv_section, 'ptp_nic_c0', fallback='oam0')
+    hwv['ptp_nic_c1'] = config.get(hwv_section, 'ptp_nic_c1', fallback='oam0')
 
     #
     # Update global variables for auth section
@@ -808,4 +816,4 @@ def setup_testcase_config(testcase_config, lab=None, natbox=None):
             Networks.set_neutron_net_patterns(net_type=net_type,
                                               net_name_pattern=net_name_pattern)
 
-    return lab, natbox,idrac
+    return lab, natbox, idrac, hwv

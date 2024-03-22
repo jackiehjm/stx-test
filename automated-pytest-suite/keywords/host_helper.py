@@ -632,7 +632,7 @@ def lock_host(host, force=False, lock_timeout=HostTimeout.LOCK,
                      "lock.".format(host))
             swact_host(host, auth_info=auth_info, con_ssh=con_ssh)
             if is_aio_dup:
-                time.sleep(90)
+                time.sleep(300)
 
     if check_cpe_alarm and is_aio_dup:
         LOG.info(

@@ -43,12 +43,13 @@ class ProjVar:
                   'IPV6_OAM': None,
                   'IDRAC':{},
                   'CHK_IF_REQ_INT_CFG': True,
-                  'SRIOV_ENABLED': True
+                  'SRIOV_ENABLED': True,
+                  'HWV_CONFIG': {}
                   }
 
     @classmethod
     def init_vars(cls, lab, natbox, idrac,logdir, tenant, collect_all, always_collect,
-                  horizon_visible):
+                  horizon_visible, hwv):
 
         labname = lab['short_name']
 
@@ -68,7 +69,8 @@ class ProjVar:
             'IDRAC':idrac,
             'COLLECT_ALL': collect_all,
             'ALWAYS_COLLECT': always_collect,
-            'HORIZON_VISIBLE': horizon_visible
+            'HORIZON_VISIBLE': horizon_visible,
+            'HWV_CONFIG': hwv
         })
 
     @classmethod
