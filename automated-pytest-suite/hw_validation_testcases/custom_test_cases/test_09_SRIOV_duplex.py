@@ -7,110 +7,120 @@ from keywords import common, kube_helper, host_helper, system_helper
 from consts.auth import  HostLinuxUser, Tenant
 from utils import cli
 import subprocess
+from consts.proj_vars import ProjVar
 
-# Comment this section if standby controller has the SRIOV interfaces to test
-'''
-@mark.hw_validation
-def test_1_3_swact(request):
-    if system_helper.is_aio_simplex():
-        skip("Simplex system detected")
-    host = system_helper.get_active_controller_name()
-    first_active = host
-    first_standby = system_helper.get_standby_controller_name()
-    LOG.tc_step("First Active is "+ first_active)
-    LOG.tc_step("First Standby is "+ first_standby)
-    with host_helper.ssh_to_host(hostname=host) as con_ssh:
-        LOG.tc_step("Issuing swact command")
-        con_ssh.exec_cmd("system host-swact "+host)
-        time.sleep(60)
-'''
-# End of comment, if standby controller has the SRIOV interfaces to test
+HWV_CONFIG = ProjVar.get_var('HWV_CONFIG')
+SRIOV_NIC_C0 = HWV_CONFIG['sriov_nic_c0']
+SRIOV_NIC_C1 = HWV_CONFIG['sriov_nic_c1']
 
+SRIOV_C0 = "controller-0"
+SRIOV_C1 = "controller-1"
 
 @mark.hw_validation
-def test_sriov_interfaces(request):
+def test_sriov_swact_c1(request):
     if system_helper.is_aio_simplex():
         skip("Simplex system detected")
-    host = system_helper.get_active_controller_name()
-    with host_helper.ssh_to_host(hostname=host) as con_ssh: 
-        LOG.tc_step("Preparing Interfaces and Pods")
+
+    active, standby = system_helper.get_active_standby_controllers()
+    if active == SRIOV_C1:
+        host_helper.swact_host(SRIOV_C1)
+        time.sleep(120)
+
+@mark.hw_validation
+def test_sriov_client(request):
+    if system_helper.is_aio_simplex():
+        skip("Simplex system detected")
+
+    with host_helper.ssh_to_host(hostname=SRIOV_C0) as con_ssh: 
+        LOG.tc_step("Preparing Interfaces for iperf client")
         home_dir = HostLinuxUser.get_home()
-        standby = system_helper.get_standby_controller_name()
-        host_helper.lock_host(standby)
+
+        host_helper.lock_host(SRIOV_C1)
         time.sleep(5)
-        '''
-# Comment this section and define interfaces manually if two interfaces are not enabled and ready for SRIOV on this controller. If unsure enter interface name manually, uncommeting the two lines below and using the appropriate interface name.
-        Interfaces = "utils/test_files/Test9_and_10_Find_Interfaces.py" 
-        LOG.tc_step("Finding SR-IOV capable interfaces")
-        common.scp_from_localhost_to_active_controller(source_path= Interfaces, dest_path=home_dir)
-        code, output = con_ssh.exec_cmd("python3 Test9_and_10_Find_Interfaces.py")
-        rows = output.strip().split('\n')
-        LOG.tc_step("Code equals " + str(code))
-        LOG.tc_step("Output equals " + str(output))
-        LOG.tc_step("Interface 1 is " + rows[0])
-        LOG.tc_step("Interface 2 is " + rows[1])
-        speed = con_ssh.exec_sudo_cmd("ethtool " + rows[0] + " | awk -F'[ :]' '/Speed:/ {gsub(/[^0-9.]/,\"\",$3); print $3}'") #Uncomment this line if you have uncommented the section above.
-        con_ssh.exec_cmd("system host-if-modify -m 1500 -n sriov0 -c pci-sriov -N 12 controller-1 " + rows[0] + " --vf-driver=netdevice")
 
-# Comment this section and define interfaces manually if two interfaces are not enabled and ready for SRIOV on this controller. If unsure enter interface name manually, uncommeting the two lines below and using the appropriate interface name.
-        '''
-        con_ssh.exec_cmd("system host-if-modify -m 1500 -n sriov0 -c pci-sriov -N 12 controller-1 ens1f1 --vf-driver=netdevice") # Define specific interface to be used if not using script to find Interface
-
-        con_ssh.exec_cmd("system host-if-add -c pci-sriov controller-1 sriov00 vf sriov0 -N 2 --vf-driver=netdevice")
-        con_ssh.exec_cmd("system datanetwork-add physnet0 vlan")
-        con_ssh.exec_cmd("system interface-datanetwork-assign controller-1 sriov00 physnet0")
-        con_ssh.exec_cmd("system host-memory-modify controller-1 -1G 10 0")
         con_ssh.exec_cmd("system datanetwork-add physnet1 vlan")
+        con_ssh.exec_cmd("system host-if-modify -m 1500 -n sriov1 -c pci-sriov -N 12 %s %s --vf-driver=netdevice" % (SRIOV_C1, SRIOV_NIC_C1)) 
+        con_ssh.exec_cmd("system host-if-add -c pci-sriov %s sriov01 vf sriov1 -N 2 --vf-driver=netdevice" % SRIOV_C1)
+        con_ssh.exec_cmd("system interface-datanetwork-assign %s sriov01 physnet1" % SRIOV_C1)
+        con_ssh.exec_cmd("system host-memory-modify %s -1G 10 0" % SRIOV_C1)
+        con_ssh.exec_cmd("system host-label-assign %s sriovdp=enabled" % SRIOV_C1)
+        con_ssh.exec_cmd("system host-label-assign %s kube-cpu-mgr-policy=static" % SRIOV_C1)
 
-#        con_ssh.exec_cmd("system host-if-modify -m 1500 -n sriov1 -c pci-sriov -N 12 controller-1 " + rows[1] + " --vf-driver=netdevice") #Uncomment this line if you have uncommented the section above.
-        con_ssh.exec_cmd("system host-if-modify -m 1500 -n sriov1 -c pci-sriov -N 12 controller-1 ens2f1 --vf-driver=netdevice") # Define specific interface to be used if not using script to find Interface.
-
-        con_ssh.exec_cmd("system host-if-add -c pci-sriov controller-1 sriov01 vf sriov1 -N 2 --vf-driver=netdevice")
-        con_ssh.exec_cmd("system interface-datanetwork-assign controller-1 sriov01 physnet1")
-        con_ssh.exec_cmd("system host-label-assign controller-1 sriovdp=enabled")
-        con_ssh.exec_cmd("system host-label-assign controller-1 kube-cpu-mgr-policy=static")
-        host_helper.unlock_host(standby)
+        host_helper.unlock_host(SRIOV_C1)
         time.sleep(20)
-        con_ssh.exec_cmd("system host-swact "+host)
-        time.sleep(60)
-        return speed #Comment this line if entering interfaces manually
 
 @mark.hw_validation
-def test_sriov_interfaces_part2(request):
+def test_sriov_swact_c0(request):
     if system_helper.is_aio_simplex():
         skip("Simplex system detected")
+
+    host_helper.swact_host(SRIOV_C0)
+    time.sleep(120)
+
+@mark.hw_validation
+def test_sriov_server(request):
+    if system_helper.is_aio_simplex():
+        skip("Simplex system detected")
+
+    with host_helper.ssh_to_host(hostname=SRIOV_C1) as con_ssh: 
+        LOG.tc_step("Preparing Interfaces for iperf server")
+        home_dir = HostLinuxUser.get_home()
+
+        host_helper.lock_host(SRIOV_C0)
+        time.sleep(5)
+
+        con_ssh.exec_cmd("system datanetwork-add physnet0 vlan")
+        con_ssh.exec_cmd("system host-if-modify -m 1500 -n sriov0 -c pci-sriov -N 12 %s %s --vf-driver=netdevice" % (SRIOV_C0, SRIOV_NIC_C0))
+        con_ssh.exec_cmd("system host-if-add -c pci-sriov %s sriov00 vf sriov0 -N 2 --vf-driver=netdevice" % SRIOV_C0)
+        con_ssh.exec_cmd("system interface-datanetwork-assign %s sriov00 physnet0" % SRIOV_C0)
+        con_ssh.exec_cmd("system host-memory-modify %s -1G 10 0" % SRIOV_C0)
+        con_ssh.exec_cmd("system host-label-assign %s sriovdp=enabled" % SRIOV_C0)
+        con_ssh.exec_cmd("system host-label-assign %s kube-cpu-mgr-policy=static" % SRIOV_C0)
+
+        host_helper.unlock_host(SRIOV_C0)
+        time.sleep(20)
+
+@mark.hw_validation
+def test_sriov_iperf_pods(request):
+    if system_helper.is_aio_simplex():
+        skip("Simplex system detected")
+
     host = system_helper.get_active_controller_name()
     with host_helper.ssh_to_host(hostname=host) as con_ssh:
         home_dir = HostLinuxUser.get_home()
         Iperf_Server = "utils/test_files/Test9_sriov-iperfserver-validation.yaml"
         Iperf_Client = "utils/test_files/Test9_sriov-iperfclient-validation.yaml" 
         Iperf_Test = "utils/test_files/Test9_iperf3.py" 
-        common.scp_from_localhost_to_active_controller(source_path= Iperf_Server, dest_path=home_dir)
+        common.scp_from_localhost_to_active_controller(source_path=Iperf_Server, dest_path=home_dir)
+
         con_ssh.exec_cmd("kubectl create -f Test9_sriov-iperfserver-validation.yaml")
         time.sleep(30)
+
         common.scp_from_localhost_to_active_controller(source_path= Iperf_Client, dest_path=home_dir)
         con_ssh.exec_cmd("kubectl create -f Test9_sriov-iperfclient-validation.yaml")
         time.sleep(30)
+
         LOG.tc_step("Installing iperf3 on Server and Client Pods")
         con_ssh.exec_cmd("kubectl exec -it iperf-server -- yum install -y iperf3")
         time.sleep(30)
         con_ssh.exec_cmd("kubectl exec -it iperf-client -- yum install -y iperf3")
         time.sleep(30)
+
         LOG.tc_step("Executing iperf3 test")
-        common.scp_from_localhost_to_active_controller(source_path= Iperf_Test, dest_path=home_dir)
+        common.scp_from_localhost_to_active_controller(source_path=Iperf_Test, dest_path=home_dir)
         code, output = con_ssh.exec_cmd("python3 Test9_iperf3.py")
         final_output = output.strip().split('\n')
         LOG.tc_step("Bandwidth is " + final_output[-1])
         bandwidth = final_output[-1]
 
-        speed = con_ssh.exec_sudo_cmd("ethtool ens1f1 | awk -F'[ :]' '/Speed:/ {gsub(/[^0-9.]/,\"\",$3); print $3}'") # Uncomment this line if entering interfaces manually. Define specific interface to be used.
+        speed = con_ssh.exec_sudo_cmd("ethtool %s | awk -F'[ :]' '/Speed:/ {gsub(/[^0-9.]/,\"\",$3); print $3}'" % SRIOV_NIC_C1)
 
         LOG.tc_step("Link Speed is " + str(speed[1]) + " Mbits/s.")
         LOG.tc_step("iPerf Bandwidth is " + bandwidth + " Gbits/sec.")
         performance = (float(bandwidth)/float(speed[1])) * 100
         LOG.tc_step("Performance is " + str(performance))
         con_ssh.exec_cmd("kubectl delete -f Test9_sriov-iperfclient-validation.yaml")
-        con_ssh.exec_cmd("kubectl delete -f Test9_sriov-iperfclient-validation.yaml")
+        con_ssh.exec_cmd("kubectl delete -f Test9_sriov-iperfserver-validation.yaml")
         con_ssh.exec_cmd("rm Test9_*")
         assert (performance >= 90), "Test Failed"
 

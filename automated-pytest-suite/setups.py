@@ -634,6 +634,8 @@ def setup_testcase_config(testcase_config, lab=None, natbox=None):
     hwv = {}
     hwv['ptp_nic_c0'] = config.get(hwv_section, 'ptp_nic_c0', fallback='oam0')
     hwv['ptp_nic_c1'] = config.get(hwv_section, 'ptp_nic_c1', fallback='oam0')
+    hwv['sriov_nic_c0'] = config.get(hwv_section, 'sriov_nic_c0', fallback='mgmt0')
+    hwv['sriov_nic_c1'] = config.get(hwv_section, 'sriov_nic_c1', fallback='mgmt0')
 
     #
     # Update global variables for auth section
