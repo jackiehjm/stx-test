@@ -13,10 +13,17 @@ PTP_NIC_C1 = HWV_CONFIG['ptp_nic_c1']
 PTP_C0 = "controller-0"
 PTP_C1 = "controller-1"
 
-@mark.hw_validation
-def test_ptp_swact_c0(request):
+def check_skip():
     if system_helper.is_aio_simplex():
         skip("Simplex system detected")
+    if PTP_NIC_C0 == "NoNIC":
+        skip("No NIC configured on Controller-0 for PTP")
+    if PTP_NIC_C1 == "NoNIC":
+        skip("No NIC configured on Controller-1 for PTP")
+
+@mark.hw_validation
+def test_ptp_swact_c0(request):
+    check_skip()
 
     active, standby = system_helper.get_active_standby_controllers()
     if active == PTP_C0:
@@ -25,8 +32,7 @@ def test_ptp_swact_c0(request):
 
 @mark.hw_validation
 def test_ptp_gm(request):
-    if system_helper.is_aio_simplex():
-        skip("Simplex system detected")
+    check_skip()
 
     kube_helper.wait_for_nodes_ready(timeout=30)
     with host_helper.ssh_to_host(hostname=PTP_C1) as con_ssh:
@@ -43,16 +49,14 @@ def test_ptp_gm(request):
     
 @mark.hw_validation
 def test_ptp_swact_c1(request):
-    if system_helper.is_aio_simplex():
-        skip("Simplex system detected")
+    check_skip()
 
     host_helper.swact_host(PTP_C1)
     time.sleep(120)
 
 @mark.hw_validation
 def test_ptp_slave(request):
-    if system_helper.is_aio_simplex():
-        skip("Simplex system detected")
+    check_skip()
 
     kube_helper.wait_for_nodes_ready(timeout=30)
     with host_helper.ssh_to_host(hostname=PTP_C0) as con_ssh:
@@ -70,8 +74,7 @@ def test_ptp_slave(request):
 
 @mark.hw_validation
 def test_ptp_gm_present(request):
-    if system_helper.is_aio_simplex():
-        skip("Simplex system detected")
+    check_skip()
 
     with host_helper.ssh_to_host(hostname=PTP_C1) as con_ssh:
         gm = con_ssh.exec_sudo_cmd("pmc -u -b 0 -d 0 -f /etc/linuxptp/ptpinstance/ptp4l-ptpinst1.conf 'GET TIME_STATUS_NP' |grep gmPresent")
