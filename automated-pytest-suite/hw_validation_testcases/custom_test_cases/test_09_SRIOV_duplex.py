@@ -16,10 +16,17 @@ SRIOV_NIC_C1 = HWV_CONFIG['sriov_nic_c1']
 SRIOV_C0 = "controller-0"
 SRIOV_C1 = "controller-1"
 
-@mark.hw_validation
-def test_sriov_swact_c1(request):
+def check_skip():
     if system_helper.is_aio_simplex():
         skip("Simplex system detected")
+    if SRIOV_NIC_C0 == "NoNIC":
+        skip("No NIC configured on Controller-0 for SRIOV")
+    if SRIOV_NIC_C1 == "NoNIC":
+        skip("No NIC configured on Controller-1 for SRIOV")
+
+@mark.hw_validation
+def test_sriov_swact_c1(request):
+    check_skip()
 
     active, standby = system_helper.get_active_standby_controllers()
     if active == SRIOV_C1:
@@ -28,8 +35,7 @@ def test_sriov_swact_c1(request):
 
 @mark.hw_validation
 def test_sriov_client(request):
-    if system_helper.is_aio_simplex():
-        skip("Simplex system detected")
+    check_skip()
 
     with host_helper.ssh_to_host(hostname=SRIOV_C0) as con_ssh: 
         LOG.tc_step("Preparing Interfaces for iperf client")
@@ -51,16 +57,14 @@ def test_sriov_client(request):
 
 @mark.hw_validation
 def test_sriov_swact_c0(request):
-    if system_helper.is_aio_simplex():
-        skip("Simplex system detected")
+    check_skip()
 
     host_helper.swact_host(SRIOV_C0)
     time.sleep(120)
 
 @mark.hw_validation
 def test_sriov_server(request):
-    if system_helper.is_aio_simplex():
-        skip("Simplex system detected")
+    check_skip()
 
     with host_helper.ssh_to_host(hostname=SRIOV_C1) as con_ssh: 
         LOG.tc_step("Preparing Interfaces for iperf server")
@@ -82,8 +86,7 @@ def test_sriov_server(request):
 
 @mark.hw_validation
 def test_sriov_iperf_pods(request):
-    if system_helper.is_aio_simplex():
-        skip("Simplex system detected")
+    check_skip()
 
     host = system_helper.get_active_controller_name()
     with host_helper.ssh_to_host(hostname=host) as con_ssh:

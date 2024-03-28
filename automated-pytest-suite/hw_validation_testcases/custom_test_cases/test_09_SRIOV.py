@@ -7,11 +7,29 @@ from keywords import common, kube_helper, host_helper, system_helper
 from consts.auth import  HostLinuxUser, Tenant
 from utils import cli
 import subprocess
+from consts.proj_vars import ProjVar
 
-@mark.hw_validation 
-def test_sriov_interfaces(request):
+HWV_CONFIG = ProjVar.get_var('HWV_CONFIG')
+SRIOV_NIC_C0 = HWV_CONFIG['sriov_nic_c0']
+
+def check_skip():
     if system_helper.is_aio_duplex():
         skip("Duplex system detected")
+    if SRIOV_NIC_C0 == "NoNIC":
+        skip("No NIC configured for SRIOV")
+
+@mark.hw_validation 
+def test_sriov_server(request):
+    check_skip()
+
+@mark.hw_validation 
+def test_sriov_client(request):
+    check_skip()
+
+@mark.hw_validation 
+def test_sriov_iperf_pods(request):
+    check_skip()
+
     host = system_helper.get_active_controller_name()
     with host_helper.ssh_to_host(hostname=host) as con_ssh: 
         LOG.tc_step("Preparing Interfaces and Pods")
