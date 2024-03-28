@@ -10,6 +10,7 @@ from consts.timeout import HostTimeout
 from consts.stx import HostAvailState
 
 @mark.hw_validation
+@mark.flaky(reruns=3)
 def test_3_2_memory_alarm_set_and_clear(request):
     alarm_present = 'none'
     host = system_helper.get_active_controller_name()

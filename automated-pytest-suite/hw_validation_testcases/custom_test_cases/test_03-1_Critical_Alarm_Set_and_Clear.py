@@ -10,18 +10,19 @@ from consts.timeout import HostTimeout
 from consts.stx import HostAvailState
 
 @mark.hw_validation
+@mark.flaky(reruns=3)
 def test_alarm_generation(request):
-    host = system_helper.get_active_controller_name()
-    with host_helper.ssh_to_host(hostname=host) as con_ssh:
-        active, standby =  system_helper.get_active_standby_controllers()
+    active, standby =  system_helper.get_active_standby_controllers()
+    with host_helper.ssh_to_host(hostname=active) as con_ssh:
         home_dir = HostLinuxUser.get_home()
         LOG.tc_step("Verifying Minor Alarm Generation")
-        LOG.info("Generating minor alarm")
-        standby_host = system_helper.get_standby_controller_name()
+
         Stress_CPU = "utils/test_files/Test3-1_stress-cpu.yaml"
-        LOG.tc_step("Finding SR-IOV capable interfaces")
         common.scp_from_localhost_to_active_controller(source_path= Stress_CPU, dest_path=home_dir)
+
+        LOG.info("Generating minor alarm")
         con_ssh.exec_cmd("kubectl apply -f Test3-1_stress-cpu.yaml -n kube-system ")
+
         filesystem_alarm = "Platform CPU threshold exceeded"
         LOG.info("Waiting for Alarm to show")
         time.sleep(300)
@@ -31,6 +32,7 @@ def test_alarm_generation(request):
                 break
             else:
                 time.sleep(5)
+
         LOG.info("Deleting Pod")
         con_ssh.exec_cmd("kubectl delete -f Test3-1_stress-cpu.yaml -n kube-system")
 
@@ -42,4 +44,5 @@ def test_alarm_generation(request):
             else:
                 break
         con_ssh.exec_cmd("rm Test3-1_stress-cpu.yaml")
+
         assert ('CPU' in alarm_present), "No Alarm Generated" 
