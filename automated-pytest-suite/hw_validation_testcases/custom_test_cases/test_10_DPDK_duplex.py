@@ -17,6 +17,14 @@ SRIOV_NIC_C1 = HWV_CONFIG['sriov_nic_c1']
 SRIOV_C0 = "controller-0"
 SRIOV_C1 = "controller-1"
 
+def check_skip():
+    if system_helper.is_aio_simplex():
+        skip("Simplex system detected")
+    if SRIOV_NIC_C0 == "NoNIC":
+        skip("No NIC configured on Controller-0 for SRIOV")
+    if SRIOV_NIC_C1 == "NoNIC":
+        skip("No NIC configured on Controller-1 for SRIOV")
+
 def find_virtfn_number(string):
     pattern = r"virtfn(\d+)"
     match = re.search(pattern, string)
@@ -51,8 +59,7 @@ def get_vf_pci(con_ssh, podname):
 
 @mark.hw_validation
 def test_dpdk_swact_c0(request):
-    if system_helper.is_aio_simplex():
-        skip("Simplex system detected")
+    check_skip()
 
     active, standby = system_helper.get_active_standby_controllers()
     if active == SRIOV_C0:
@@ -61,8 +68,7 @@ def test_dpdk_swact_c0(request):
 
 @mark.hw_validation
 def test_dpdk_pktgen(request):
-    if system_helper.is_aio_simplex():
-        skip("Simplex system detected")
+    check_skip()
 
     with host_helper.ssh_to_host(hostname=SRIOV_C1) as con_ssh: 
         LOG.tc_step("Preparing Interfaces for pktgen")
@@ -88,16 +94,14 @@ def test_dpdk_pktgen(request):
 
 @mark.hw_validation
 def test_dpdk_swact_c1(request):
-    if system_helper.is_aio_simplex():
-        skip("Simplex system detected")
+    check_skip()
 
     host_helper.swact_host(SRIOV_C1)
     time.sleep(120)
 
 @mark.hw_validation
 def test_dpdk_testpmd(request):
-    if system_helper.is_aio_simplex():
-        skip("Simplex system detected")
+    check_skip()
 
     with host_helper.ssh_to_host(hostname=SRIOV_C0) as con_ssh: 
         LOG.tc_step("Preparing Interfaces for testpmd")
@@ -124,8 +128,7 @@ def test_dpdk_testpmd(request):
 
 @mark.hw_validation
 def test_dpdk_pods(request):
-    if system_helper.is_aio_simplex():
-        skip("Simplex system detected")
+    check_skip()
 
     active = system_helper.get_active_controller_name()
     with host_helper.ssh_to_host(hostname=active) as con_ssh:
@@ -155,8 +158,7 @@ def test_dpdk_pods(request):
 
 @mark.hw_validation
 def test_dpdk_vf_pktgen(request):
-    if system_helper.is_aio_simplex():
-        skip("Simplex system detected")
+    check_skip()
 
     with host_helper.ssh_to_host(hostname=SRIOV_C0) as con_ssh:
         vf_pci = get_vf_pci(con_ssh, "dpdk-pktgen")
@@ -173,8 +175,7 @@ def test_dpdk_vf_pktgen(request):
 
 @mark.hw_validation
 def test_dpdk_vf_testpmd(request):
-    if system_helper.is_aio_simplex():
-        skip("Simplex system detected")
+    check_skip()
 
     with host_helper.ssh_to_host(hostname=SRIOV_C1) as con_ssh:
         vf_pci = get_vf_pci(con_ssh, "dpdk-testpmd")
@@ -190,8 +191,7 @@ def test_dpdk_vf_testpmd(request):
 
 @mark.hw_validation
 def test_dpdk_check(request):
-    if system_helper.is_aio_simplex():
-        skip("Simplex system detected")
+    check_skip()
 
     active = system_helper.get_active_controller_name()
     with host_helper.ssh_to_host(hostname=active) as con_ssh:
