@@ -5,10 +5,14 @@ FROM python:3.6.8-jessie
 
 # Install required Python packages
 RUN pip3 install \
-    pytest==3.6.1 \
     pexpect \
+    pytest-html==1.22.1 \
+    pytest-rerunfailures==5.0 \
+    pytest==3.6.1 \
     pyyaml \
-    requests
+    requests \
+    tabulate \
+    xmltodict
 
 # Set default command to bash
 CMD ["bash"]
