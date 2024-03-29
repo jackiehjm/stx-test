@@ -895,7 +895,7 @@ def parse_table_to_dict(table, col_count=2, key=0, value=1):
 
 
 def validate_cyclictest_out(out, maxlatency=20):
-    assert "No such file" not in out,"CyclicTest result file not generated"
+    assert "No such file" not in out, "CyclicTest result file not generated"
     out=out.split("\n")
     ispresent=False
     for line in out:
@@ -903,8 +903,8 @@ def validate_cyclictest_out(out, maxlatency=20):
             ispresent=True
             latencies = line[line.index(":") + 1:].split()
             for l in latencies:
-                assert (int(l)) <= maxlatency, "Latency is more than {}".format(maxlatency)
-    assert ispresent,"Max Latency info not present in file"
+                assert (int(l)) <= maxlatency, "Max latency is {}, which is more than {}".format(l, maxlatency)
+    assert ispresent, "Max Latency info not present in file"
 
 
 
