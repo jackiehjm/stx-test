@@ -9,6 +9,8 @@ from consts.proj_vars import ProjVar
 HWV_CONFIG = ProjVar.get_var('HWV_CONFIG')
 PTP_NIC_C0 = HWV_CONFIG['ptp_nic_c0']
 
+SCRIPT_SLAVE = "Test8_ptp_slave.sh"
+
 def check_skip():
     if system_helper.is_aio_duplex():
         skip("Duplex system detected")
@@ -16,6 +18,11 @@ def check_skip():
         skip("No NIC configured for PTP")
     if PTP_NIC_C0 == "NoGM":
         skip("No PTP Grand Master available")
+
+def clean_up():
+    host = system_helper.get_active_controller_name()
+    with host_helper.ssh_to_host(hostname=host) as con_ssh:
+        con_ssh.exec_cmd("rm {}".format(SCRIPT_SLAVE))
 
 @mark.hw_validation
 def test_ptp_slave(request):
@@ -25,23 +32,26 @@ def test_ptp_slave(request):
     with host_helper.ssh_to_host(hostname=host) as con_ssh:
         LOG.info("Preparing PTP Interfaces")
         home_dir = HostLinuxUser.get_home()
-        PTP_Test = "utils/test_files/Test8_ptp.sh"
+        PTP_Test = "utils/test_files/{}".format(SCRIPT_SLAVE)
         common.scp_from_localhost_to_active_controller(source_path=PTP_Test, dest_path=home_dir)
         time.sleep(5)
 
         host_helper.lock_host(host)
         time.sleep(5)
 
-        con_ssh.exec_cmd("chmod +x Test8_ptp.sh")
-        con_ssh.exec_cmd("./Test8_ptp.sh")
+        con_ssh.exec_cmd("chmod +x {}".format(SCRIPT_SLAVE))
+        con_ssh.exec_cmd(os.path.join(home_dir, SCRIPT_SLAVE))
 
         LOG.info("Unlocking Host")
         host_helper.unlock_host(host)
         time.sleep(20)
 
+        request.addfinalizer(clean_up)
+
 @mark.hw_validation
 def test_ptp_gm_present(request):
-    check_skip()
+    #check_skip()
+    request.addfinalizer(clean_up)
 
     host = system_helper.get_active_controller_name()
     with host_helper.ssh_to_host(hostname=host) as con_ssh:
@@ -49,6 +59,6 @@ def test_ptp_gm_present(request):
         gm = con_ssh.exec_sudo_cmd("pmc -u -b 0 -d 0 -f /etc/linuxptp/ptpinstance/ptp4l-ptpinst1.conf 'GET TIME_STATUS_NP' |grep gmPresent")
         state = con_ssh.exec_sudo_cmd("pmc -u -b 0 -d 0 -f /etc/linuxptp/ptpinstance/ptp4l-ptpinst1.conf 'GET PORT_DATA_SET' |grep portState")
         ClockClass = con_ssh.exec_sudo_cmd("pmc -u -b 0 -d 0 -f /etc/linuxptp/ptpinstance/ptp4l-ptpinst1.conf 'GET PARENT_DATA_SET' | grep gm.ClockClass")
-        con_ssh.exec_cmd("rm Test8_ptp.sh")
 
         assert ("gmPresent                  true" in gm), "Test Failed"
+
