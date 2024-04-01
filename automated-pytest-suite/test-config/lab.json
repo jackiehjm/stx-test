@@ -1,0 +1,30 @@
+{
+  "ala-amd-aio-dx-133":{
+    "name": "ala-amd-aio-dx-133",
+    "short_name": "ala-amd-aio-dx-133",
+    "floating ip": "147.11.92.133",
+    "controller-0 ip": "147.11.92.128",
+    "controller-1 ip": "147.11.92.129"
+  },
+  "ala-amd-aio-sx-130":{
+    "name": "ala-amd-aio-sx-130",
+    "short_name": "ala-amd-aio-sx-130",
+    "floating ip": "147.11.92.130",
+    "controller-0 ip": "147.11.92.130",
+    "controller-1 ip": "147.11.92.130"
+  },
+  "ala-amd-aio-sx-131":{
+    "name": "ala-amd-aio-sx-131",
+    "short_name": "ala-amd-aio-sx-131",
+    "floating ip": "147.11.92.131",
+    "controller-0 ip": "147.11.92.131",
+    "controller-1 ip": "147.11.92.131"
+  },
+  "ala-amd-aio-sx-132":{
+    "name": "ala-amd-aio-sx-132",
+    "short_name": "ala-amd-aio-sx-132",
+    "floating ip": "147.11.92.132",
+    "controller-0 ip": "147.11.92.132",
+    "controller-1 ip": "147.11.92.132"
+  }
+}
